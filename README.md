@@ -1,2 +1,1 @@
-# TwigPackage
-Twig package for Berlioz Framework
+# Twig package for Berlioz Framework
