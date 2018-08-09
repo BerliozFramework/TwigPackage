@@ -24,6 +24,7 @@
   },
   "require": {
     "php": ">=7.1",
+    "ext-json": "*",
     "berlioz/core": "@dev",
     "berlioz/utils": "@dev",
     "twig/twig": "~2.4",
