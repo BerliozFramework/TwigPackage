@@ -35,9 +35,9 @@ class Twig implements TemplateEngine
      * @param string[]                      $extensions Twig extensions classes
      * @param array                         $globals    Globals variables
      *
-     * @throws \Berlioz\Config\Exception\ConfigException
+     * @throws \Berlioz\Core\Exception\BerliozException
      * @throws \Berlioz\ServiceContainer\Exception\ContainerException
-     * @throws \Twig_Error
+     * @throws \Twig_Error_Loader
      */
     public function __construct(AbstractApp $app, array $paths = [], array $options = [], array $extensions = [], array $globals = [])
     {
@@ -131,7 +131,7 @@ class Twig implements TemplateEngine
 
     /**
      * @inheritdoc
-     * @throws \Berlioz\Config\Exception\ConfigException
+     * @throws \Berlioz\Core\Exception\BerliozException
      * @throws \Twig_Error Twig errors
      */
     public function render(string $name, array $variables = []): string
