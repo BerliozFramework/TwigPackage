@@ -16,10 +16,17 @@ namespace Berlioz\Package\Twig;
 
 use Berlioz\Core\App\AbstractApp;
 use Berlioz\Core\App\AppAwareTrait;
+use Berlioz\Core\Exception\BerliozException;
+use Berlioz\Core\Exception\ConfigException;
 
 class TwigExtension extends \Twig_Extension
 {
     use AppAwareTrait;
+    const H2PUSH_CACHE_COOKIE = 'h2pushes';
+    /** @var array Cache for HTTP2 push */
+    private $h2pushCache = [];
+    /** @var array Manifest content */
+    private $manifest;
 
     /**
      * TwigExtension constructor.
@@ -29,6 +36,11 @@ class TwigExtension extends \Twig_Extension
     public function __construct(AbstractApp $app)
     {
         $this->setApp($app);
+
+        // Get cache from cookies
+        if (isset($_COOKIE[self::H2PUSH_CACHE_COOKIE]) && is_array($_COOKIE[self::H2PUSH_CACHE_COOKIE])) {
+            $this->h2pushCache = array_keys($_COOKIE[self::H2PUSH_CACHE_COOKIE]);
+        }
     }
 
     /**
@@ -44,6 +56,7 @@ class TwigExtension extends \Twig_Extension
         $filters[] = new \Twig_Filter('nl2p', 'b_nl2p', ['is_safe' => ['html']]);
         $filters[] = new \Twig_Filter('human_file_size', 'b_human_file_size');
         $filters[] = new \Twig_Filter('json_decode', 'json_decode');
+        $filters[] = new \Twig_Filter('spaceless', [$this, 'filterSpaceless']);
 
         return $filters;
     }
@@ -65,6 +78,120 @@ class TwigExtension extends \Twig_Extension
         }
 
         return b_date_format($datetime, $pattern, $locale);
+    }
+
+    /**
+     * Spaceless filter.
+     *
+     * @param string $str
+     *
+     * @return string
+     */
+    public function filterSpaceless(string $str)
+    {
+        return trim(preg_replace('/>\s+</', '><', $str));
+    }
+
+    /**
+     * Returns a list of functions to add to the existing list.
+     *
+     * @return \Twig_Function[]
+     */
+    public function getFunctions()
+    {
+        $functions = [];
+        $functions[] = new \Twig_Function('path', [$this, 'functionPath']);
+        $functions[] = new \Twig_Function('asset', [$this, 'functionAsset']);
+        $functions[] = new \Twig_Function('preload', [$this, 'functionPreload']);
+
+        return $functions;
+    }
+
+    /**
+     * Function path to generate path.
+     *
+     * @param string $name
+     * @param array  $parameters
+     *
+     * @return string
+     * @throws \Berlioz\Core\Exception\BerliozException
+     */
+    public function functionPath(string $name, array $parameters = []): string
+    {
+        return $this->getApp()->getServiceContainer()->get('router')->generate($name, $parameters) ?? '';
+    }
+
+    /**
+     * Function asset to get generate asset path.
+     *
+     * @param string $key
+     *
+     * @return string
+     * @throws \Berlioz\Config\Exception\ConfigException
+     * @throws \Berlioz\Core\Exception\BerliozException
+     */
+    public function functionAsset(string $key): string
+    {
+        if (is_null($this->manifest)) {
+            // Get filename from configuration
+            if (empty($manifestFilename = $this->getApp()->getConfig()->get('services.templating.arguments.options.manifest'))) {
+                throw new ConfigException('Key "services.templating.arguments.options.manifest" is not defined in configuration');
+            }
+
+            // Get file
+            if (($manifest = @file_get_contents($manifestFilename)) === false) {
+                throw new BerliozException(sprintf('Manifest file "%s" does not exists', $manifestFilename));
+            }
+
+            // Convert manifest file
+            if (is_null($manifest = json_decode($manifest, true))) {
+                throw new BerliozException(sprintf('Manifest file "%s" is not a valid JSON file', $manifestFilename));
+            }
+
+            $this->manifest = $manifest;
+        }
+
+        return $this->manifest[$key] ?? '';
+    }
+
+    /**
+     * Function preload to pre loading of request for HTTP 2 protocol.
+     *
+     * @param string $link
+     * @param array  $parameters
+     *
+     * @return string Link
+     */
+    public function functionPreload(string $link, array $parameters = []): string
+    {
+        $push = !(!empty($parameters['nopush']) && $parameters['nopush'] == true);
+        if (!$push || !in_array(md5($link), $this->h2pushCache)) {
+            $header = sprintf('Link: <%s>; rel=preload', $link);
+            // as
+            if (!empty($parameters['as'])) {
+                $header = sprintf('%s; as=%s', $header, $parameters['as']);
+            }
+            // type
+            if (!empty($parameters['type'])) {
+                $header = sprintf('%s; type=%s', $header, $parameters['as']);
+            }
+            // crossorigin
+            if (!empty($parameters['crossorigin']) && $parameters['crossorigin'] == true) {
+                $header .= '; crossorigin';
+            }
+            // nopush
+            if (!$push) {
+                $header .= '; nopush';
+            }
+            header($header, false);
+            // Cache
+            if ($push) {
+                $this->h2pushCache[] = md5($link);
+                setcookie(sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)), 1, 0, '/', '', false, true);
+            }
+        }
+
+        return $link;
     }
 
     /**
