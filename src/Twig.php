@@ -36,7 +36,7 @@ class Twig implements TemplateEngine
      * @param array                         $globals    Globals variables
      *
      * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Berlioz\ServiceContainer\Exception\ContainerException
+     * @throws \Berlioz\ServiceContainer\Exception\Instantiator
      * @throws \Twig_Error_Loader
      */
     public function __construct(AbstractApp $app, array $paths = [], array $options = [], array $extensions = [], array $globals = [])
@@ -63,6 +63,7 @@ class Twig implements TemplateEngine
             if (!is_object($extension)) {
                 $extension = $this->getApp()
                                   ->getServiceContainer()
+                                  ->getInstantiator()
                                   ->newInstanceOf($extension,
                                                   ['templating' => $this,
                                                    'twigLoader' => $this->loader,

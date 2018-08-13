@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "b8f95b1ba09bf880cca822c149e3a984",
+    "content-hash": "c959663adf38b7b8461244a5b40bd04d",
     "packages": [
         {
             "name": "berlioz/config",
@@ -53,12 +53,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/BerliozFramework/Core.git",
-                "reference": "1b66ce148a570dd2efdec192f0e3a8998f61144c"
+                "reference": "51a06f94bc018276410c2c5228105d93ecb1878c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/BerliozFramework/Core/zipball/1b66ce148a570dd2efdec192f0e3a8998f61144c",
-                "reference": "1b66ce148a570dd2efdec192f0e3a8998f61144c",
+                "url": "https://api.github.com/repos/BerliozFramework/Core/zipball/51a06f94bc018276410c2c5228105d93ecb1878c",
+                "reference": "51a06f94bc018276410c2c5228105d93ecb1878c",
                 "shasum": ""
             },
             "require": {
@@ -98,7 +98,7 @@
             ],
             "description": "Berlioz Framework Core",
             "homepage": "http://www.berlioz-framework.com",
-            "time": "2018-08-07T10:31:53+00:00"
+            "time": "2018-08-13T13:47:05+00:00"
         },
         {
             "name": "berlioz/service-container",
@@ -106,12 +106,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/BerliozFramework/ServiceContainer.git",
-                "reference": "5d3df9b2bce460cc78435045bceb2d7d0c56dee0"
+                "reference": "84bf722d3ce8bd67c93cf9ec6d720abce813ec83"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/BerliozFramework/ServiceContainer/zipball/5d3df9b2bce460cc78435045bceb2d7d0c56dee0",
-                "reference": "5d3df9b2bce460cc78435045bceb2d7d0c56dee0",
+                "url": "https://api.github.com/repos/BerliozFramework/ServiceContainer/zipball/84bf722d3ce8bd67c93cf9ec6d720abce813ec83",
+                "reference": "84bf722d3ce8bd67c93cf9ec6d720abce813ec83",
                 "shasum": ""
             },
             "require": {
@@ -119,6 +119,7 @@
                 "psr/container": "1.0.0"
             },
             "require-dev": {
+                "ext-json": "*",
                 "phpunit/phpunit": "~6.5"
             },
             "type": "library",
@@ -139,7 +140,7 @@
             ],
             "description": "Berlioz Service Container",
             "homepage": "http://www.berlioz-framework.com",
-            "time": "2018-06-11T17:02:12+00:00"
+            "time": "2018-08-13T13:38:57+00:00"
         },
         {
             "name": "berlioz/utils",
@@ -1929,7 +1930,8 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.1"
+        "php": ">=7.1",
+        "ext-json": "*"
     },
     "platform-dev": []
 }
