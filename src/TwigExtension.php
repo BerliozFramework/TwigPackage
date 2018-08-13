@@ -148,10 +148,28 @@ class TwigExtension extends \Twig_Extension
                 throw new BerliozException(sprintf('Manifest file "%s" is not a valid JSON file', $manifestFilename));
             }
 
+            // Standardize directory separator
+            $standardizeSeparator =
+                function (&$value) {
+                    $value = str_replace('\\', '/', $value);
+                };
+            $keys = array_keys($manifest);
+            $values = array_values($manifest);
+            array_walk($keys, $standardizeSeparator);
+            array_walk($values, $standardizeSeparator);
+            $manifest = array_combine($keys, $values);
+            unset($keys, $values);
+
             $this->manifest = $manifest;
         }
 
-        return $this->manifest[$key] ?? '';
+        if (isset($this->manifest[$key])) {
+            return sprintf('%s%s',
+                           $this->getApp()->getConfig()->get('services.templating.arguments.options.assets_prefix', ''),
+                           $this->manifest[$key]);
+        }
+
+        return '';
     }
 
     /**
