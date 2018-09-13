@@ -118,7 +118,13 @@ class TwigExtension extends \Twig_Extension
      */
     public function functionPath(string $name, array $parameters = []): string
     {
-        return $this->getApp()->getServiceContainer()->get('router')->generate($name, $parameters) ?? '';
+        $path = $this->getApp()->getServiceContainer()->get('router')->generate($name, $parameters);
+
+        if ($path === false) {
+            throw new BerliozException(sprintf('Route named "%s" does not found', $name));
+        }
+
+        return $path;
     }
 
     /**
