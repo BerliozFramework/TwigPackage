@@ -205,7 +205,7 @@ class TwigExtension extends \Twig_Extension
             // Cache
             if ($push) {
                 $this->h2pushCache[] = md5($link);
-                setcookie(sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)), 1, 0, '/', '', false, true);
+                setcookie(sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)), '1', 0, '/', '', false, true);
             }
         }
 
