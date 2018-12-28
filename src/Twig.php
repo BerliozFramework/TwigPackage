@@ -14,54 +14,67 @@ declare(strict_types=1);
 
 namespace Berlioz\Package\Twig;
 
-use Berlioz\Core\App\AbstractApp;
-use Berlioz\Core\App\AppAwareTrait;
+use Berlioz\Core\Core;
+use Berlioz\Core\CoreAwareInterface;
+use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Core\Debug;
-use Berlioz\Core\Package\TemplateEngine;
-use Psr\Log\LoggerInterface;
 
-class Twig implements TemplateEngine
+/**
+ * Class Twig.
+ *
+ * @package Berlioz\Package\Twig
+ */
+class Twig implements CoreAwareInterface
 {
-    use AppAwareTrait;
+    use CoreAwareTrait;
+    /** @var \Twig_Loader_Chain */
     private $loader;
+    /** @var \Twig_Environment */
     private $twig;
 
     /**
      * Twig constructor.
      *
-     * @param \Berlioz\Core\App\AbstractApp $app        Berlioz Application
-     * @param array                         $paths      Twig paths
-     * @param array                         $options    Twig options
-     * @param string[]                      $extensions Twig extensions classes
-     * @param array                         $globals    Globals variables
+     * @param \Berlioz\Core\Core $core       Berlioz Core
+     * @param array              $paths      Twig paths
+     * @param array              $options    Twig options
+     * @param string[]           $extensions Twig extensions classes
+     * @param array              $globals    Globals variables
      *
      * @throws \Berlioz\Core\Exception\BerliozException
+     * @throws \Berlioz\ServiceContainer\Exception\ContainerException
      * @throws \Berlioz\ServiceContainer\Exception\InstantiatorException
      * @throws \Twig_Error_Loader
      */
-    public function __construct(AbstractApp $app, array $paths = [], array $options = [], array $extensions = [], array $globals = [])
-    {
-        $this->setApp($app);
+    public function __construct(
+        Core $core,
+        array $paths = [],
+        array $options = [],
+        array $extensions = [],
+        array $globals = []
+    ) {
+        $this->setCore($core);
 
         // Twig
-        $this->loader = new \Twig_Loader_Filesystem([], $this->getApp()->getAppDir());
+        $this->loader = new \Twig_Loader_Chain();
+        $this->loader->addLoader($fileLoader = new \Twig_Loader_Filesystem([], $this->getCore()->getDirectories()->getAppDir()));
         $this->twig = new \Twig_Environment($this->loader, $options);
-        $this->getTwig()->addExtension(new TwigExtension($this->getApp()));
 
         // Debug?
-        if ($options['debug']) {
-            $this->getTwig()->addExtension(new \Twig_Extension_Debug);
+        if ($options['debug'] ?? false) {
+            $this->getEnvironment()->addExtension(new \Twig_Extension_Debug);
         }
 
         // Paths
         foreach ($paths as $namespace => $path) {
-            $this->getLoader()->addPath($path, $namespace);
+            $fileLoader->addPath($path, $namespace);
         }
 
         // Add extensions
+        $extensions = array_unique($extensions);
         foreach ($extensions as $extension) {
             if (!is_object($extension)) {
-                $extension = $this->getApp()
+                $extension = $this->getCore()
                                   ->getServiceContainer()
                                   ->getInstantiator()
                                   ->newInstanceOf($extension,
@@ -70,12 +83,17 @@ class Twig implements TemplateEngine
                                                    'twig'       => $this->twig]);
             }
 
-            $this->getTwig()->addExtension($extension);
+            $this->getEnvironment()->addExtension($extension);
         }
 
         // Add globals
         foreach ($globals as $name => $value) {
-            $this->getTwig()->addGlobal($name, $value);
+            $this->getCore()
+                 ->getServiceContainer()
+                 ->getInstantiator()
+                 ->invokeMethod($this->getEnvironment(),
+                                'addGlobal',
+                                ['name' => $name, 'value' => $value]);
         }
     }
 
@@ -92,42 +110,21 @@ class Twig implements TemplateEngine
     /**
      * Get Twig loader.
      *
-     * @return \Twig_Loader_Filesystem
+     * @return \Twig_Loader_Chain
      */
-    public function getLoader(): \Twig_Loader_Filesystem
+    public function getLoader(): \Twig_Loader_Chain
     {
         return $this->loader;
     }
 
     /**
-     * Get Twig.
+     * Get Twig environment.
      *
      * @return \Twig_Environment
      */
-    public function getTwig(): \Twig_Environment
+    public function getEnvironment(): \Twig_Environment
     {
         return $this->twig;
-    }
-
-    /**
-     * @inheritdoc
-     */
-    public function addGlobal(string $name, $value): TemplateEngine
-    {
-        $this->getTwig()->addGlobal($name, $value);
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     * @throws \Twig_Error Twig errors
-     */
-    public function registerPath(string $path, string $namespace = null): TemplateEngine
-    {
-        $this->getLoader()->addPath($path, $namespace);
-
-        return $this;
     }
 
     /**
@@ -143,20 +140,10 @@ class Twig implements TemplateEngine
                 ->setDescription(sprintf('Rendering of template "%s"', $name));
 
         // Twig rendering
-        $str = $this->getTwig()->render($name, $variables);
+        $str = $this->getEnvironment()->render($name, $variables);
 
         // Debug
-        $this->getApp()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
-
-        // Log
-        if ($this->getApp()->getServiceContainer()->has(LoggerInterface::class)) {
-            $this->getApp()
-                 ->getServiceContainer()
-                 ->get(LoggerInterface::class)
-                 ->debug(sprintf('%s / Rendering of template "%s" done in %1.4fms', __METHOD__,
-                                 $name,
-                                 $twigActivity->duration() / 1000));
-        }
+        $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
 
         return $str;
     }
@@ -167,7 +154,7 @@ class Twig implements TemplateEngine
      */
     public function hasBlock(string $name, string $blockName): bool
     {
-        $template = $this->getTwig()->load($name);
+        $template = $this->getEnvironment()->load($name);
 
         return $template->hasBlock($blockName);
     }
@@ -187,23 +174,11 @@ class Twig implements TemplateEngine
                                          $name));
 
         // Twig rendering
-        $template = $this->getTwig()->load($name);
+        $template = $this->getEnvironment()->load($name);
         $str = $template->renderBlock($blockName, $variables);
 
         // Debug
-        $this->getApp()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
-
-        // Log
-        if ($this->getApp()->getServiceContainer()->has(LoggerInterface::class)) {
-            $this->getApp()
-                 ->getServiceContainer()
-                 ->get(LoggerInterface::class)
-                 ->debug(sprintf('%s / Rendering of block "%s" in template "%s" done in %1.3fms',
-                                 __METHOD__,
-                                 $blockName,
-                                 $name,
-                                 $twigActivity->duration() / 1000));
-        }
+        $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
 
         return $str;
     }

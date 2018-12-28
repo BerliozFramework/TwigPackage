@@ -14,14 +14,20 @@ declare(strict_types=1);
 
 namespace Berlioz\Package\Twig;
 
-use Berlioz\Core\App\AbstractApp;
-use Berlioz\Core\App\AppAwareTrait;
+use Berlioz\Core\Core;
+use Berlioz\Core\CoreAwareInterface;
+use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Core\Exception\BerliozException;
 use Berlioz\Core\Exception\ConfigException;
 
-class TwigExtension extends \Twig_Extension
+/**
+ * Class TwigExtension.
+ *
+ * @package Berlioz\Package\Twig
+ */
+class TwigExtension extends \Twig_Extension implements CoreAwareInterface
 {
-    use AppAwareTrait;
+    use CoreAwareTrait;
     const H2PUSH_CACHE_COOKIE = 'h2pushes';
     /** @var array Cache for HTTP2 push */
     private $h2pushCache = [];
@@ -31,11 +37,11 @@ class TwigExtension extends \Twig_Extension
     /**
      * TwigExtension constructor.
      *
-     * @param \Berlioz\Core\App\AbstractApp $app
+     * @param \Berlioz\Core\Core $core
      */
-    public function __construct(AbstractApp $app)
+    public function __construct(Core $core)
     {
-        $this->setApp($app);
+        $this->setCore($core);
 
         // Get cache from cookies
         if (isset($_COOKIE[self::H2PUSH_CACHE_COOKIE]) && is_array($_COOKIE[self::H2PUSH_CACHE_COOKIE])) {
@@ -74,7 +80,7 @@ class TwigExtension extends \Twig_Extension
     public function filterDateFormat($datetime, string $pattern = 'dd/MM/yyyy', string $locale = null): string
     {
         if (empty($locale)) {
-            $locale = $this->getApp()->getLocale();
+            $locale = $this->getCore()->getLocale();
         }
 
         return b_date_format($datetime, $pattern, $locale);
@@ -118,7 +124,7 @@ class TwigExtension extends \Twig_Extension
      */
     public function functionPath(string $name, array $parameters = []): string
     {
-        $path = $this->getApp()->getServiceContainer()->get('router')->generate($name, $parameters);
+        $path = $this->getCore()->getServiceContainer()->get('router')->generate($name, $parameters);
 
         if ($path === false) {
             throw new BerliozException(sprintf('Route named "%s" does not found', $name));
@@ -140,8 +146,8 @@ class TwigExtension extends \Twig_Extension
     {
         if (is_null($this->manifest)) {
             // Get filename from configuration
-            if (empty($manifestFilename = $this->getApp()->getConfig()->get('services.templating.arguments.options.manifest'))) {
-                throw new ConfigException('Key "services.templating.arguments.options.manifest" is not defined in configuration');
+            if (empty($manifestFilename = $this->getCore()->getConfig()->get('twig.options.manifest'))) {
+                throw new ConfigException('Key "twig.options.manifest" is not defined in configuration');
             }
 
             // Get file
@@ -171,7 +177,7 @@ class TwigExtension extends \Twig_Extension
 
         if (isset($this->manifest[$key])) {
             return sprintf('%s%s',
-                           $this->getApp()->getConfig()->get('services.templating.arguments.options.assets_prefix', ''),
+                           $this->getCore()->getConfig()->get('twig.options.assets_prefix', ''),
                            $this->manifest[$key]);
         }
 
