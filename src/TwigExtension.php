@@ -14,18 +14,20 @@ declare(strict_types=1);
 
 namespace Berlioz\Package\Twig;
 
+use Berlioz\Core\Asset\Assets;
 use Berlioz\Core\Core;
 use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
-use Berlioz\Core\Exception\BerliozException;
-use Berlioz\Core\Exception\ConfigException;
+use Berlioz\Package\Twig\Exception\AssetException;
+use Berlioz\Package\Twig\Exception\PathException;
+use Twig\Extension\AbstractExtension;
 
 /**
  * Class TwigExtension.
  *
  * @package Berlioz\Package\Twig
  */
-class TwigExtension extends \Twig_Extension implements CoreAwareInterface
+class TwigExtension extends AbstractExtension implements CoreAwareInterface
 {
     use CoreAwareTrait;
     const H2PUSH_CACHE_COOKIE = 'h2pushes';
@@ -108,6 +110,8 @@ class TwigExtension extends \Twig_Extension implements CoreAwareInterface
         $functions = [];
         $functions[] = new \Twig_Function('path', [$this, 'functionPath']);
         $functions[] = new \Twig_Function('asset', [$this, 'functionAsset']);
+        $functions[] = new \Twig_Function('entrypoints', [$this, 'functionEntryPoints'], ['is_safe' => ['html']]);
+        $functions[] = new \Twig_Function('entrypoints_list', [$this, 'functionEntryPointsList']);
         $functions[] = new \Twig_Function('preload', [$this, 'functionPreload']);
 
         return $functions;
@@ -120,17 +124,21 @@ class TwigExtension extends \Twig_Extension implements CoreAwareInterface
      * @param array  $parameters
      *
      * @return string
-     * @throws \Berlioz\Core\Exception\BerliozException
+     * @throws \Berlioz\Package\Twig\Exception\PathException
      */
     public function functionPath(string $name, array $parameters = []): string
     {
-        $path = $this->getCore()->getServiceContainer()->get('router')->generate($name, $parameters);
+        try {
+            $path = $this->getCore()->getServiceContainer()->get('router')->generate($name, $parameters);
 
-        if ($path === false) {
-            throw new BerliozException(sprintf('Route named "%s" does not found', $name));
+            if ($path === false) {
+                throw new PathException(sprintf('Route named "%s" does not found', $name));
+            }
+
+            return $path;
+        } catch (\Throwable $e) {
+            throw new PathException('Routing treatment error', -1, null, $e);
         }
-
-        return $path;
     }
 
     /**
@@ -139,49 +147,110 @@ class TwigExtension extends \Twig_Extension implements CoreAwareInterface
      * @param string $key
      *
      * @return string
-     * @throws \Berlioz\Config\Exception\ConfigException
-     * @throws \Berlioz\Core\Exception\BerliozException
+     * @throws \Berlioz\Package\Twig\Exception\AssetException
      */
     public function functionAsset(string $key): string
     {
-        if (is_null($this->manifest)) {
-            // Get filename from configuration
-            if (empty($manifestFilename = $this->getCore()->getConfig()->get('twig.options.manifest'))) {
-                throw new ConfigException('Key "twig.options.manifest" is not defined in configuration');
+        try {
+            /** @var \Berlioz\Core\Asset\Assets $assets */
+            $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
+
+            if (!$assets->getManifest()->has($key)) {
+                throw new AssetException(sprintf('Asset "%s" not found in manifest file', $key));
             }
 
-            // Get file
-            if (($manifest = @file_get_contents($manifestFilename)) === false) {
-                throw new BerliozException(sprintf('Manifest file "%s" does not exists', $manifestFilename));
-            }
-
-            // Convert manifest file
-            if (is_null($manifest = json_decode($manifest, true))) {
-                throw new BerliozException(sprintf('Manifest file "%s" is not a valid JSON file', $manifestFilename));
-            }
-
-            // Standardize directory separator
-            $standardizeSeparator =
-                function (&$value) {
-                    $value = str_replace('\\', '/', $value);
-                };
-            $keys = array_keys($manifest);
-            $values = array_values($manifest);
-            array_walk($keys, $standardizeSeparator);
-            array_walk($values, $standardizeSeparator);
-            $manifest = array_combine($keys, $values);
-            unset($keys, $values);
-
-            $this->manifest = $manifest;
+            return $assets->getManifest()->get($key);
+        } catch (AssetException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            throw new AssetException('Manifest treatment error', -1, null, $e);
         }
+    }
 
-        if (isset($this->manifest[$key])) {
-            return sprintf('%s%s',
-                           $this->getCore()->getConfig()->get('twig.options.assets_prefix', ''),
-                           $this->manifest[$key]);
+    /**
+     * Function to get entry points in html.
+     *
+     * @param string      $entry
+     * @param string|null $type
+     * @param array       $options
+     *
+     * @return string
+     * @throws \Berlioz\Package\Twig\Exception\AssetException
+     */
+    public function functionEntryPoints(string $entry, ?string $type = null, array $options = []): string
+    {
+        try {
+            $output = '';
+
+            /** @var \Berlioz\Core\Asset\Assets $assets */
+            $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
+            $entryPoints = $assets->getEntryPoints()->get($entry, $type);
+
+            if (!is_null($type)) {
+                $entryPoints = [$type => $entryPoints];
+            }
+
+            foreach ($entryPoints as $type => $entryPointsByType) {
+                foreach ($entryPointsByType as $entryPoint) {
+                    $entryPoint = strip_tags($entryPoint);
+
+                    // Preload option
+                    $preloadOptions = [];
+                    if (isset($options['preload'])) {
+                        if (is_array($options['preload'])) {
+                            $preloadOptions = $options['preload'];
+                        }
+                    }
+
+                    switch ($type) {
+                        case 'js':
+                            if (isset($options['preload'])) {
+                                $entryPoint = $this->functionPreload($entryPoint, array_merge(['as' => 'script'], $preloadOptions));
+                            }
+
+                            // Defer/Async?
+                            $deferOrAsync = '';
+                            $deferOrAsync .= ($options['defer'] ?? false) === true ? ' defer' : '';
+                            $deferOrAsync .= ($options['async'] ?? false) === true ? ' async' : '';
+
+                            $output .= sprintf('<script type="%s"%s></script>', strip_tags($entryPoint), $deferOrAsync) . PHP_EOL;
+                            break;
+                        case 'css':
+                            if (isset($options['preload'])) {
+                                $entryPoint = $this->functionPreload($entryPoint, array_merge(['as' => 'style'], $preloadOptions));
+                            }
+
+                            $output .= sprintf('<link rel="stylesheet" href="%s">', strip_tags($entryPoint)) . PHP_EOL;
+                            break;
+                    }
+                }
+            }
+
+            return $output;
+        } catch (\Exception $e) {
+            throw new AssetException('Entry points treatment error', -1, null, $e);
         }
+    }
 
-        return '';
+    /**
+     * Function to get entry points list.
+     *
+     * @param string      $entry
+     * @param string|null $type
+     *
+     * @return array
+     * @throws \Berlioz\Package\Twig\Exception\AssetException
+     */
+    public function functionEntryPointsList(string $entry, ?string $type = null): array
+    {
+        try {
+            /** @var \Berlioz\Core\Asset\Assets $assets */
+            $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
+
+            return $assets->getEntryPoints()->get($entry, $type);
+        } catch (\Exception $e) {
+            throw new AssetException('Entry points treatment error', -1, null, $e);
+        }
     }
 
     /**
