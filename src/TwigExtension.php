@@ -213,7 +213,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
                             $deferOrAsync .= ($options['defer'] ?? false) === true ? ' defer' : '';
                             $deferOrAsync .= ($options['async'] ?? false) === true ? ' async' : '';
 
-                            $output .= sprintf('<script type="%s"%s></script>', strip_tags($entryPoint), $deferOrAsync) . PHP_EOL;
+                            $output .= sprintf('<script src="%s"%s></script>', strip_tags($entryPoint), $deferOrAsync) . PHP_EOL;
                             break;
                         case 'css':
                             if (isset($options['preload'])) {
@@ -264,6 +264,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     public function functionPreload(string $link, array $parameters = []): string
     {
         $push = !(!empty($parameters['nopush']) && $parameters['nopush'] == true);
+
         if (!$push || !in_array(md5($link), $this->h2pushCache)) {
             $header = sprintf('Link: <%s>; rel=preload', $link);
             // as
@@ -282,7 +283,9 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             if (!$push) {
                 $header .= '; nopush';
             }
+
             header($header, false);
+
             // Cache
             if ($push) {
                 $this->h2pushCache[] = md5($link);
