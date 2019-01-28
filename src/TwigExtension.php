@@ -65,6 +65,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
         $filters[] = new \Twig_Filter('human_file_size', 'b_human_file_size');
         $filters[] = new \Twig_Filter('json_decode', 'json_decode');
         $filters[] = new \Twig_Filter('spaceless', [$this, 'filterSpaceless']);
+        $filters[] = new \Twig_Filter('basename', 'basename');
 
         return $filters;
     }
