@@ -32,7 +32,7 @@ trait RenderingControllerTrait
     abstract public function getCore(): ?Core;
 
     /**
-     * Do render of templates.
+     * Render a template.
      *
      * @param string  $name      Filename of template
      * @param mixed[] $variables Variables for template
@@ -47,5 +47,25 @@ trait RenderingControllerTrait
         $twig = $this->getCore()->getServiceContainer()->get(Twig::class);
 
         return $twig->render($name, $variables);
+    }
+
+    /**
+     * Render a block in template.
+     *
+     * @param string $name      Filename of template
+     * @param string $blockName Block name
+     * @param array  $variables Variables
+     *
+     * @return string
+     * @throws \Berlioz\Core\Exception\BerliozException
+     * @throws \Twig_Error
+     * @throws \Throwable
+     */
+    public function renderBlock(string $name, string $blockName, array $variables = []): string
+    {
+        /** @var \Berlioz\Package\Twig\Twig $twig */
+        $twig = $this->getCore()->getServiceContainer()->get(Twig::class);
+
+        return $twig->renderBlock($name, $blockName, $variables);
     }
 }

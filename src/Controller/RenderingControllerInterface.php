@@ -24,7 +24,7 @@ use Berlioz\Core\CoreAwareInterface;
 interface RenderingControllerInterface extends CoreAwareInterface
 {
     /**
-     * Do render of templates.
+     * Render a template.
      *
      * @param string  $name      Filename of template
      * @param mixed[] $variables Variables for template
@@ -34,4 +34,17 @@ interface RenderingControllerInterface extends CoreAwareInterface
      * @throws \Twig_Error
      */
     public function render(string $name, array $variables = []): string;
+
+    /**
+     * Render a block in template.
+     *
+     * @param string $name      Filename of template
+     * @param string $blockName Block name
+     * @param array  $variables Variables
+     *
+     * @return string
+     * @throws \Berlioz\Core\Exception\BerliozException
+     * @throws \Twig_Error
+     */
+    public function renderBlock(string $name, string $blockName, array $variables = []): string;
 }
