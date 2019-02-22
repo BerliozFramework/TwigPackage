@@ -24,9 +24,10 @@
   },
   "require": {
     "php": "^7.1",
+    "ext-intl": "*",
     "ext-json": "*",
-    "berlioz/core": "dev-develop",
-    "berlioz/utils": "dev-develop",
+    "berlioz/core": "@dev",
+    "berlioz/helpers": "@dev",
     "twig/twig": "^2.6",
     "psr/log": "^1.0"
   },

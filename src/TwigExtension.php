@@ -60,7 +60,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     {
         $filters = [];
         $filters[] = new \Twig_Filter('date_format', [$this, 'filterDateFormat']);
-        $filters[] = new \Twig_Filter('truncate', 'b_truncate');
+        $filters[] = new \Twig_Filter('truncate', 'b_str_truncate');
         $filters[] = new \Twig_Filter('nl2p', 'b_nl2p', ['is_safe' => ['html']]);
         $filters[] = new \Twig_Filter('human_file_size', 'b_human_file_size');
         $filters[] = new \Twig_Filter('json_decode', 'json_decode');
@@ -82,11 +82,18 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      */
     public function filterDateFormat($datetime, string $pattern = 'dd/MM/yyyy', string $locale = null): string
     {
-        if (empty($locale)) {
-            $locale = $this->getCore()->getLocale();
+        $fmt = new \IntlDateFormatter($locale ?? $this->getCore()->getLocale(), \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
+        $fmt->setPattern((string) $pattern);
+
+        if ($datetime instanceof \DateTime) {
+            return $fmt->format($datetime);
         }
 
-        return b_date_format($datetime, $pattern, $locale);
+        if (is_numeric($datetime)) {
+            return $fmt->format((int) $datetime);
+        }
+
+        return $fmt->format(strtotime($datetime));
     }
 
     /**
