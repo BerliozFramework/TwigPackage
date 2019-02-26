@@ -14,6 +14,7 @@ declare(strict_types=1);
 
 namespace Berlioz\Package\Twig;
 
+use Berlioz\Config\ExtendedJsonConfig;
 use Berlioz\Core\Core;
 use Berlioz\Core\Package\AbstractPackage;
 use Berlioz\ServiceContainer\Service;
@@ -25,20 +26,30 @@ use Berlioz\ServiceContainer\Service;
  */
 class TwigPackage extends AbstractPackage
 {
+    ///////////////
+    /// PACKAGE ///
+    ///////////////
+
+    /**
+     * @inheritdoc
+     * @throws \Berlioz\Config\Exception\ConfigException
+     */
+    public static function config()
+    {
+        return new ExtendedJsonConfig(implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'resources', 'config.default.json']), true);
+    }
+
     /**
      * @inheritdoc
      * @throws \Berlioz\Core\Exception\BerliozException
      * @throws \Berlioz\ServiceContainer\Exception\ContainerException
      */
-    public function register()
+    public static function register(Core $core): void
     {
-        // Merge configuration
-        $this->mergeConfig(implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'resources', 'config.default.json']));
-
         // Create router service
         $twigService = new Service(Twig::class, 'twig');
         $twigService->setFactory(TwigPackage::class . '::twigFactory');
-        $this->getCore()->getServiceContainer()->add($twigService);
+        self::addService($core, $twigService);
     }
 
     /////////////////
