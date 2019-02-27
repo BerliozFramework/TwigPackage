@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace Berlioz\Package\Twig;
 
 use Berlioz\Core\Asset\Assets;
+use Berlioz\Core\Asset\EntryPoints;
+use Berlioz\Core\Asset\Manifest;
 use Berlioz\Core\Core;
 use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
@@ -152,22 +154,26 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Function asset to get generate asset path.
      *
-     * @param string $key
+     * @param string        $key
+     * @param Manifest|null $manifest
      *
      * @return string
      * @throws \Berlioz\Package\Twig\Exception\AssetException
      */
-    public function functionAsset(string $key): string
+    public function functionAsset(string $key, ?Manifest $manifest = null): string
     {
         try {
-            /** @var \Berlioz\Core\Asset\Assets $assets */
-            $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
+            if (is_null($manifest)) {
+                /** @var \Berlioz\Core\Asset\Assets $assets */
+                $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
+                $manifest = $assets->getManifest();
+            }
 
-            if (!$assets->getManifest()->has($key)) {
+            if (!$manifest->has($key)) {
                 throw new AssetException(sprintf('Asset "%s" not found in manifest file', $key));
             }
 
-            return $assets->getManifest()->get($key);
+            return $manifest->get($key);
         } catch (AssetException $e) {
             throw $e;
         } catch (\Exception $e) {
@@ -178,21 +184,26 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Function to get entry points in html.
      *
-     * @param string      $entry
-     * @param string|null $type
-     * @param array       $options
+     * @param string           $entry
+     * @param string|null      $type
+     * @param array            $options
+     * @param EntryPoints|null $entryPointsObj
      *
      * @return string
      * @throws \Berlioz\Package\Twig\Exception\AssetException
      */
-    public function functionEntryPoints(string $entry, ?string $type = null, array $options = []): string
+    public function functionEntryPoints(string $entry, ?string $type = null, array $options = [], ?EntryPoints $entryPointsObj = null): string
     {
         try {
             $output = '';
 
-            /** @var \Berlioz\Core\Asset\Assets $assets */
-            $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
-            $entryPoints = $assets->getEntryPoints()->get($entry, $type);
+            if (is_null($entryPointsObj)) {
+                /** @var \Berlioz\Core\Asset\Assets $assets */
+                $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
+                $entryPointsObj = $assets->getEntryPoints();
+            }
+
+            $entryPoints = $entryPointsObj->get($entry, $type);
 
             if (!is_null($type)) {
                 $entryPoints = [$type => $entryPoints];
