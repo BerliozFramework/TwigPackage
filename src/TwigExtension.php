@@ -95,7 +95,15 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             return $fmt->format((int) $datetime);
         }
 
-        return $fmt->format(strtotime($datetime));
+        if(is_string($datetime)) {
+            $result = $fmt->format(strtotime($datetime));
+
+            if($result) {
+                return $result;
+            }
+        }
+
+        return "";
     }
 
     /**
