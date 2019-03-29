@@ -87,7 +87,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
         $fmt = new \IntlDateFormatter($locale ?? $this->getCore()->getLocale(), \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
         $fmt->setPattern((string) $pattern);
 
-        if ($datetime instanceof \DateTimeInterface) {
+        if ($datetime instanceof \DateTime) {
             return $fmt->format($datetime);
         }
 
@@ -95,7 +95,15 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             return $fmt->format((int) $datetime);
         }
 
-        return $fmt->format(strtotime($datetime));
+        if(is_string($datetime)) {
+            $result = $fmt->format(strtotime($datetime));
+
+            if($result) {
+                return $result;
+            }
+        }
+
+        return "";
     }
 
     /**
