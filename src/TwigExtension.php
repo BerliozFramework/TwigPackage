@@ -69,7 +69,6 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
         $filters[] = new TwigFilter('nl2p', 'b_nl2p', ['is_safe' => ['html']]);
         $filters[] = new TwigFilter('human_file_size', 'b_human_file_size');
         $filters[] = new TwigFilter('json_decode', 'json_decode');
-        $filters[] = new TwigFilter('spaceless', [$this, 'filterSpaceless']);
         $filters[] = new TwigFilter('basename', 'basename');
 
         return $filters;
@@ -107,18 +106,6 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
         }
 
         return "";
-    }
-
-    /**
-     * Spaceless filter.
-     *
-     * @param string $str
-     *
-     * @return string
-     */
-    public function filterSpaceless(string $str)
-    {
-        return trim(preg_replace('/>\s+</', '><', $str));
     }
 
     /**
