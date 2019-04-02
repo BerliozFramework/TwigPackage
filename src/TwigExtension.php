@@ -23,6 +23,9 @@ use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Package\Twig\Exception\AssetException;
 use Berlioz\Package\Twig\Exception\PathException;
 use Twig\Extension\AbstractExtension;
+use Twig\TwigFilter;
+use Twig\TwigFunction;
+use Twig\TwigTest;
 
 /**
  * Class TwigExtension.
@@ -56,18 +59,18 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Returns a list of filters to add to the existing list.
      *
-     * @return \Twig_Filter[]
+     * @return \Twig\TwigFilter[]
      */
     public function getFilters()
     {
         $filters = [];
-        $filters[] = new \Twig_Filter('date_format', [$this, 'filterDateFormat']);
-        $filters[] = new \Twig_Filter('truncate', 'b_str_truncate');
-        $filters[] = new \Twig_Filter('nl2p', 'b_nl2p', ['is_safe' => ['html']]);
-        $filters[] = new \Twig_Filter('human_file_size', 'b_human_file_size');
-        $filters[] = new \Twig_Filter('json_decode', 'json_decode');
-        $filters[] = new \Twig_Filter('spaceless', [$this, 'filterSpaceless']);
-        $filters[] = new \Twig_Filter('basename', 'basename');
+        $filters[] = new TwigFilter('date_format', [$this, 'filterDateFormat']);
+        $filters[] = new TwigFilter('truncate', 'b_str_truncate');
+        $filters[] = new TwigFilter('nl2p', 'b_nl2p', ['is_safe' => ['html']]);
+        $filters[] = new TwigFilter('human_file_size', 'b_human_file_size');
+        $filters[] = new TwigFilter('json_decode', 'json_decode');
+        $filters[] = new TwigFilter('spaceless', [$this, 'filterSpaceless']);
+        $filters[] = new TwigFilter('basename', 'basename');
 
         return $filters;
     }
@@ -121,16 +124,16 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Returns a list of functions to add to the existing list.
      *
-     * @return \Twig_Function[]
+     * @return \Twig\TwigFunction[]
      */
     public function getFunctions()
     {
         $functions = [];
-        $functions[] = new \Twig_Function('path', [$this, 'functionPath']);
-        $functions[] = new \Twig_Function('asset', [$this, 'functionAsset']);
-        $functions[] = new \Twig_Function('entrypoints', [$this, 'functionEntryPoints'], ['is_safe' => ['html']]);
-        $functions[] = new \Twig_Function('entrypoints_list', [$this, 'functionEntryPointsList']);
-        $functions[] = new \Twig_Function('preload', [$this, 'functionPreload']);
+        $functions[] = new TwigFunction('path', [$this, 'functionPath']);
+        $functions[] = new TwigFunction('asset', [$this, 'functionAsset']);
+        $functions[] = new TwigFunction('entrypoints', [$this, 'functionEntryPoints'], ['is_safe' => ['html']]);
+        $functions[] = new TwigFunction('entrypoints_list', [$this, 'functionEntryPointsList']);
+        $functions[] = new TwigFunction('preload', [$this, 'functionPreload']);
 
         return $functions;
     }
@@ -326,12 +329,12 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Returns a list of tests to add to the existing list.
      *
-     * @return \Twig_Test[]
+     * @return \Twig\TwigTest[]
      */
     public function getTests()
     {
         $tests = [];
-        $tests[] = new \Twig_Test('instance of', [$this, 'testInstanceOf']);
+        $tests[] = new TwigTest('instance of', [$this, 'testInstanceOf']);
 
         return $tests;
     }

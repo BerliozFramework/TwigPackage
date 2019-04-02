@@ -18,6 +18,10 @@ use Berlioz\Core\Core;
 use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Core\Debug;
+use Twig\Environment;
+use Twig\Extension\DebugExtension;
+use Twig\Loader\ChainLoader;
+use Twig\Loader\FilesystemLoader;
 
 /**
  * Class Twig.
@@ -27,9 +31,9 @@ use Berlioz\Core\Debug;
 class Twig implements CoreAwareInterface
 {
     use CoreAwareTrait;
-    /** @var \Twig_Loader_Chain */
+    /** @var \Twig\Loader\ChainLoader */
     private $loader;
-    /** @var \Twig_Environment */
+    /** @var \Twig\Environment */
     private $twig;
 
     /**
@@ -44,7 +48,7 @@ class Twig implements CoreAwareInterface
      * @throws \Berlioz\Core\Exception\BerliozException
      * @throws \Berlioz\ServiceContainer\Exception\ContainerException
      * @throws \Berlioz\ServiceContainer\Exception\InstantiatorException
-     * @throws \Twig_Error_Loader
+     * @throws \Twig\Error\LoaderError
      */
     public function __construct(
         Core $core,
@@ -56,13 +60,13 @@ class Twig implements CoreAwareInterface
         $this->setCore($core);
 
         // Twig
-        $this->loader = new \Twig_Loader_Chain();
-        $this->loader->addLoader($fileLoader = new \Twig_Loader_Filesystem([], $this->getCore()->getDirectories()->getAppDir()));
-        $this->twig = new \Twig_Environment($this->loader, $options);
+        $this->loader = new ChainLoader();
+        $this->loader->addLoader($fileLoader = new FilesystemLoader([], $this->getCore()->getDirectories()->getAppDir()));
+        $this->twig = new Environment($this->loader, $options);
 
         // Debug?
         if ($options['debug'] ?? false) {
-            $this->getEnvironment()->addExtension(new \Twig_Extension_Debug);
+            $this->getEnvironment()->addExtension(new DebugExtension());
         }
 
         // Paths
@@ -110,9 +114,9 @@ class Twig implements CoreAwareInterface
     /**
      * Get Twig loader.
      *
-     * @return \Twig_Loader_Chain
+     * @return \Twig\Loader\ChainLoader
      */
-    public function getLoader(): \Twig_Loader_Chain
+    public function getLoader(): ChainLoader
     {
         return $this->loader;
     }
@@ -120,9 +124,9 @@ class Twig implements CoreAwareInterface
     /**
      * Get Twig environment.
      *
-     * @return \Twig_Environment
+     * @return \Twig\Environment
      */
-    public function getEnvironment(): \Twig_Environment
+    public function getEnvironment(): Environment
     {
         return $this->twig;
     }
@@ -130,7 +134,7 @@ class Twig implements CoreAwareInterface
     /**
      * @inheritdoc
      * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig_Error Twig errors
+     * @throws \Twig\Error\Error
      */
     public function render(string $name, array $variables = []): string
     {
@@ -150,7 +154,7 @@ class Twig implements CoreAwareInterface
 
     /**
      * @inheritdoc
-     * @throws \Twig_Error Twig errors
+     * @throws \Twig\Error\Error
      */
     public function hasBlock(string $name, string $blockName): bool
     {
@@ -161,7 +165,7 @@ class Twig implements CoreAwareInterface
 
     /**
      * @inheritdoc
-     * @throws \Twig_Error Twig errors
+     * @throws \Twig\Error\Error
      * @throws \Throwable
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string

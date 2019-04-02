@@ -31,7 +31,7 @@ interface RenderingControllerInterface extends CoreAwareInterface
      *
      * @return string Output content
      * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig_Error
+     * @throws \Twig\Error\Error
      */
     public function render(string $name, array $variables = []): string;
 
@@ -44,7 +44,7 @@ interface RenderingControllerInterface extends CoreAwareInterface
      *
      * @return string
      * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig_Error
+     * @throws \Twig\Error\Error
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string;
 }

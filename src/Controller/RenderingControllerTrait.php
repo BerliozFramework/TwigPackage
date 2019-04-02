@@ -39,7 +39,7 @@ trait RenderingControllerTrait
      *
      * @return string Output content
      * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig_Error
+     * @throws \Twig\Error\Error
      */
     public function render(string $name, array $variables = []): string
     {
@@ -58,7 +58,7 @@ trait RenderingControllerTrait
      *
      * @return string
      * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig_Error
+     * @throws \Twig\Error\Error
      * @throws \Throwable
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string
