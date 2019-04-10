@@ -18,7 +18,10 @@ use Berlioz\Core\Core;
 use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Core\Debug;
+use Berlioz\Package\Twig\Exception\TwigException;
+use Throwable;
 use Twig\Environment;
+use Twig\Error\Error;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
@@ -144,12 +147,18 @@ class Twig implements CoreAwareInterface
                 ->setDescription(sprintf('Rendering of template "%s"', $name));
 
         // Twig rendering
-        $str = $this->getEnvironment()->render($name, $variables);
+        try {
+            $str = $this->getEnvironment()->render($name, $variables);
 
-        // Debug
-        $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
-
-        return $str;
+            return $str;
+        } catch (Error $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new TwigException('An error occurred during rendering', 0, $e);
+        } finally {
+            // Debug
+            $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
+        }
     }
 
     /**
@@ -165,8 +174,8 @@ class Twig implements CoreAwareInterface
 
     /**
      * @inheritdoc
+     * @throws \Berlioz\Core\Exception\BerliozException
      * @throws \Twig\Error\Error
-     * @throws \Throwable
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string
     {
@@ -178,12 +187,18 @@ class Twig implements CoreAwareInterface
                                          $name));
 
         // Twig rendering
-        $template = $this->getEnvironment()->load($name);
-        $str = $template->renderBlock($blockName, $variables);
+        try {
+            $template = $this->getEnvironment()->load($name);
+            $str = $template->renderBlock($blockName, $variables);
 
-        // Debug
-        $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
-
-        return $str;
+            return $str;
+        } catch (Error $e) {
+            throw $e;
+        } catch (Throwable $e) {
+            throw new TwigException('An error occurred during rendering', 0, $e);
+        } finally {
+            // Debug
+            $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
+        }
     }
 }

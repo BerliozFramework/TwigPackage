@@ -22,6 +22,10 @@ use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Package\Twig\Exception\AssetException;
 use Berlioz\Package\Twig\Exception\PathException;
+use DateTimeInterface;
+use Exception;
+use IntlDateFormatter;
+use Throwable;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
@@ -86,10 +90,10 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      */
     public function filterDateFormat($datetime, string $pattern = 'dd/MM/yyyy', string $locale = null): string
     {
-        $fmt = new \IntlDateFormatter($locale ?? $this->getCore()->getLocale(), \IntlDateFormatter::FULL, \IntlDateFormatter::FULL);
+        $fmt = new IntlDateFormatter($locale ?? $this->getCore()->getLocale(), IntlDateFormatter::FULL, IntlDateFormatter::FULL);
         $fmt->setPattern((string) $pattern);
 
-        if ($datetime instanceof \DateTimeInterface) {
+        if ($datetime instanceof DateTimeInterface) {
             return $fmt->format($datetime);
         }
 
@@ -97,10 +101,10 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             return $fmt->format((int) $datetime);
         }
 
-        if(is_string($datetime)) {
+        if (is_string($datetime)) {
             $result = $fmt->format(strtotime($datetime));
 
-            if($result) {
+            if ($result) {
                 return $result;
             }
         }
@@ -144,7 +148,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             }
 
             return $path;
-        } catch (\Throwable $e) {
+        } catch (Throwable $e) {
             throw new PathException('Routing treatment error', -1, null, $e);
         }
     }
@@ -174,7 +178,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             return $manifest->get($key);
         } catch (AssetException $e) {
             throw $e;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new AssetException('Manifest treatment error', -1, null, $e);
         }
     }
@@ -244,7 +248,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             }
 
             return $output;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new AssetException('Entry points treatment error', -1, null, $e);
         }
     }
@@ -265,7 +269,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
 
             return $assets->getEntryPoints()->get($entry, $type);
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new AssetException('Entry points treatment error', -1, null, $e);
         }
     }

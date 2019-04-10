@@ -59,7 +59,6 @@ trait RenderingControllerTrait
      * @return string
      * @throws \Berlioz\Core\Exception\BerliozException
      * @throws \Twig\Error\Error
-     * @throws \Throwable
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string
     {
