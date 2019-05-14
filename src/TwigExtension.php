@@ -94,6 +94,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
         $fmt->setPattern((string) $pattern);
 
         if ($datetime instanceof DateTimeInterface) {
+            $fmt->setTimeZone($datetime->getTimezone());
             return $fmt->format($datetime);
         }
 
