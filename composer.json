@@ -28,7 +28,7 @@
     "ext-json": "*",
     "berlioz/core": "@dev",
     "berlioz/helpers": "@dev",
-    "twig/twig": "^2.6",
+    "twig/twig": "^2.9",
     "psr/log": "^1.0"
   },
   "require-dev": {
