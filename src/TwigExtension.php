@@ -82,8 +82,8 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * Filter to format date.
      *
      * @param \DateTime|int $datetime DateTime object or timestamp
-     * @param string        $pattern  Pattern of date result waiting
-     * @param string        $locale   Locale for pattern translation
+     * @param string $pattern Pattern of date result waiting
+     * @param string $locale Locale for pattern translation
      *
      * @return string
      * @throws \RuntimeException if application not accessible
@@ -91,15 +91,16 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     public function filterDateFormat($datetime, string $pattern = 'dd/MM/yyyy', string $locale = null): string
     {
         $fmt = new IntlDateFormatter($locale ?? $this->getCore()->getLocale(), IntlDateFormatter::FULL, IntlDateFormatter::FULL);
-        $fmt->setPattern((string) $pattern);
+        $fmt->setPattern((string)$pattern);
 
         if ($datetime instanceof DateTimeInterface) {
             $fmt->setTimeZone($datetime->getTimezone());
+
             return $fmt->format($datetime);
         }
 
         if (is_numeric($datetime)) {
-            return $fmt->format((int) $datetime);
+            return $fmt->format((int)$datetime);
         }
 
         if (is_string($datetime)) {
@@ -134,7 +135,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * Function path to generate path.
      *
      * @param string $name
-     * @param array  $parameters
+     * @param array $parameters
      *
      * @return string
      * @throws \Berlioz\Package\Twig\Exception\PathException
@@ -157,7 +158,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Function asset to get generate asset path.
      *
-     * @param string        $key
+     * @param string $key
      * @param Manifest|null $manifest
      *
      * @return string
@@ -187,9 +188,9 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Function to get entry points in html.
      *
-     * @param string           $entry
-     * @param string|null      $type
-     * @param array            $options
+     * @param string $entry
+     * @param string|null $type
+     * @param array $options
      * @param EntryPoints|null $entryPointsObj
      *
      * @return string
@@ -257,7 +258,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Function to get entry points list.
      *
-     * @param string      $entry
+     * @param string $entry
      * @param string|null $type
      *
      * @return array
@@ -279,7 +280,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * Function preload to pre loading of request for HTTP 2 protocol.
      *
      * @param string $link
-     * @param array  $parameters
+     * @param array $parameters
      *
      * @return string Link
      */
@@ -311,7 +312,18 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             // Cache
             if ($push) {
                 $this->h2pushCache[] = md5($link);
-                setcookie(sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)), '1', 0, '/', '', false, true);
+                setcookie(
+                    sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)),
+                    '1',
+                    [
+                        'expires' => 0,
+                        'path' => '/',
+                        'domain' => '',
+                        'secure' => true,
+                        'httponly' => true,
+                        'samesite' => 'Strict',
+                    ]
+                );
             }
         }
 
@@ -334,7 +346,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Test instance of.
      *
-     * @param mixed  $object     The tested object
+     * @param mixed $object The tested object
      * @param string $class_name The class name
      *
      * @return bool
