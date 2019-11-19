@@ -312,18 +312,23 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             // Cache
             if ($push) {
                 $this->h2pushCache[] = md5($link);
-                setcookie(
-                    sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)),
-                    '1',
-                    [
-                        'expires' => 0,
-                        'path' => '/',
-                        'domain' => '',
-                        'secure' => true,
-                        'httponly' => true,
-                        'samesite' => 'Strict',
-                    ]
-                );
+
+                if (PHP_VERSION_ID >= 70300) {
+                    setcookie(
+                        sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)),
+                        '1',
+                        [
+                            'expires' => 0,
+                            'path' => '/',
+                            'domain' => '',
+                            'secure' => true,
+                            'httponly' => true,
+                            'samesite' => 'Strict',
+                        ]
+                    );
+                } else {
+                    setcookie(sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)), '1', 0, '/', '', false, true);
+                }
             }
         }
 
