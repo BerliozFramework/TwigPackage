@@ -34,7 +34,7 @@ trait RenderingControllerTrait
     /**
      * Render a template.
      *
-     * @param string  $name      Filename of template
+     * @param string $name Filename of template
      * @param mixed[] $variables Variables for template
      *
      * @return string Output content
@@ -52,9 +52,9 @@ trait RenderingControllerTrait
     /**
      * Render a block in template.
      *
-     * @param string $name      Filename of template
+     * @param string $name Filename of template
      * @param string $blockName Block name
-     * @param array  $variables Variables
+     * @param array $variables Variables
      *
      * @return string
      * @throws \Berlioz\Core\Exception\BerliozException

@@ -36,7 +36,16 @@ class TwigPackage extends AbstractPackage
      */
     public static function config()
     {
-        return new ExtendedJsonConfig(implode(DIRECTORY_SEPARATOR, [__DIR__, '..', 'resources', 'config.default.json']), true);
+        return new ExtendedJsonConfig(
+            implode(
+                DIRECTORY_SEPARATOR, [
+                __DIR__,
+                '..',
+                'resources',
+                'config.default.json',
+            ]
+            ), true
+        );
     }
 
     /**
@@ -70,8 +79,10 @@ class TwigPackage extends AbstractPackage
     public static function twigFactory(Core $core): Twig
     {
         return $core->getServiceContainer()
-                    ->getInstantiator()
-                    ->newInstanceOf(Twig::class,
-                                    $core->getConfig()->get('twig', []));
+            ->getInstantiator()
+            ->newInstanceOf(
+                Twig::class,
+                $core->getConfig()->get('twig', [])
+            );
     }
 }

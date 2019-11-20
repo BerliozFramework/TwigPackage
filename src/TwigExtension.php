@@ -20,12 +20,11 @@ use Berlioz\Core\Asset\Manifest;
 use Berlioz\Core\Core;
 use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
-use Berlioz\Package\Twig\Exception\AssetException;
-use Berlioz\Package\Twig\Exception\PathException;
 use DateTimeInterface;
 use Exception;
 use IntlDateFormatter;
 use Throwable;
+use Twig\Error\RuntimeError;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigFunction;
@@ -111,7 +110,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             }
         }
 
-        return "";
+        return '';
     }
 
     /**
@@ -138,7 +137,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param array $parameters
      *
      * @return string
-     * @throws \Berlioz\Package\Twig\Exception\PathException
+     * @throws \Twig\Error\Error
      */
     public function functionPath(string $name, array $parameters = []): string
     {
@@ -146,12 +145,12 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             $path = $this->getCore()->getServiceContainer()->get('router')->generate($name, $parameters);
 
             if ($path === false) {
-                throw new PathException(sprintf('Route named "%s" does not found', $name));
+                throw new RuntimeError(sprintf('Route named "%s" does not found', $name));
             }
 
             return $path;
         } catch (Throwable $e) {
-            throw new PathException('Routing treatment error', -1, null, $e);
+            throw new RuntimeError('Routing treatment error', -1, null, $e);
         }
     }
 
@@ -162,7 +161,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param Manifest|null $manifest
      *
      * @return string
-     * @throws \Berlioz\Package\Twig\Exception\AssetException
+     * @throws \Twig\Error\Error
      */
     public function functionAsset(string $key, ?Manifest $manifest = null): string
     {
@@ -174,14 +173,14 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
             }
 
             if (!$manifest->has($key)) {
-                throw new AssetException(sprintf('Asset "%s" not found in manifest file', $key));
+                throw new RuntimeError(sprintf('Asset "%s" not found in manifest file', $key));
             }
 
             return $manifest->get($key);
-        } catch (AssetException $e) {
+        } catch (RuntimeError $e) {
             throw $e;
         } catch (Exception $e) {
-            throw new AssetException('Manifest treatment error', -1, null, $e);
+            throw new RuntimeError('Manifest treatment error', -1, null, $e);
         }
     }
 
@@ -194,7 +193,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param EntryPoints|null $entryPointsObj
      *
      * @return string
-     * @throws \Berlioz\Package\Twig\Exception\AssetException
+     * @throws \Twig\Error\Error
      */
     public function functionEntryPoints(string $entry, ?string $type = null, array $options = [], ?EntryPoints $entryPointsObj = null): string
     {
@@ -251,7 +250,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
 
             return $output;
         } catch (Exception $e) {
-            throw new AssetException('Entry points treatment error', -1, null, $e);
+            throw new RuntimeError('Entry points treatment error', -1, null, $e);
         }
     }
 
@@ -262,7 +261,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param string|null $type
      *
      * @return array
-     * @throws \Berlioz\Package\Twig\Exception\AssetException
+     * @throws \Twig\Error\Error
      */
     public function functionEntryPointsList(string $entry, ?string $type = null): array
     {
@@ -272,7 +271,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
 
             return $assets->getEntryPoints()->get($entry, $type);
         } catch (Exception $e) {
-            throw new AssetException('Entry points treatment error', -1, null, $e);
+            throw new RuntimeError('Entry points treatment error', -1, null, $e);
         }
     }
 

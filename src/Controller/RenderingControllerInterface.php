@@ -26,7 +26,7 @@ interface RenderingControllerInterface extends CoreAwareInterface
     /**
      * Render a template.
      *
-     * @param string  $name      Filename of template
+     * @param string $name Filename of template
      * @param mixed[] $variables Variables for template
      *
      * @return string Output content
@@ -38,9 +38,9 @@ interface RenderingControllerInterface extends CoreAwareInterface
     /**
      * Render a block in template.
      *
-     * @param string $name      Filename of template
+     * @param string $name Filename of template
      * @param string $blockName Block name
-     * @param array  $variables Variables
+     * @param array $variables Variables
      *
      * @return string
      * @throws \Berlioz\Core\Exception\BerliozException
