@@ -18,6 +18,7 @@ use Berlioz\Core\Core;
 use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Core\Debug;
+use Berlioz\Core\Exception\BerliozException;
 use Exception;
 use Throwable;
 use Twig\Environment;
@@ -159,8 +160,10 @@ class Twig implements CoreAwareInterface
             return $str;
         } catch (Error $e) {
             throw $e;
+        } catch (Exception $e) {
+            throw new Error('An error occurred during rendering', -1, null, $e);
         } catch (Throwable $e) {
-            throw new Error('An error occurred during rendering', -1, null, $e instanceof Exception ? $e : null);
+            throw new BerliozException('An error occurred during rendering', 0, $e);
         } finally {
             // Debug
             $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
@@ -204,8 +207,10 @@ class Twig implements CoreAwareInterface
             return $str;
         } catch (Error $e) {
             throw $e;
+        } catch (Exception $e) {
+            throw new Error('An error occurred during rendering', -1, null, $e);
         } catch (Throwable $e) {
-            throw new Error('An error occurred during rendering', -1, null, $e instanceof Exception ? $e : null);
+            throw new BerliozException('An error occurred during rendering', 0, $e);
         } finally {
             // Debug
             $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
