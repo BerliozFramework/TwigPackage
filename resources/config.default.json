@@ -10,7 +10,7 @@
     },
     "options": {
       "cache": "%berlioz.directories.cache%/twig",
-      "debug": "%berlioz.debug%"
+      "debug": "%berlioz.debug.enable%"
     },
     "extensions": [
       "Berlioz\\Package\\Twig\\TwigExtension"
