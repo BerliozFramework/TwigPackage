@@ -2,8 +2,6 @@
   "name": "berlioz/twig-package",
   "type": "berlioz-package",
   "description": "Twig package for Berlioz Framework",
-  "minimum-stability": "dev",
-  "prefer-stable": true,
   "license": "MIT",
   "homepage": "https://getberlioz.com",
   "authors": [
@@ -30,7 +28,7 @@
     "php": "^7.1",
     "ext-intl": "*",
     "ext-json": "*",
-    "berlioz/core": "@dev",
+    "berlioz/core": "^1.0",
     "berlioz/helpers": "^1.0",
     "twig/twig": "^2.7 || ^3.0",
     "psr/log": "^1.0"
