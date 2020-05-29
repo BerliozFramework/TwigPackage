@@ -14,6 +14,7 @@ namespace Berlioz\Package\Twig\Tests;
 
 use Berlioz\Core\Core;
 use Berlioz\Package\Twig\TestProject\FakeDefaultDirectories;
+use Berlioz\Package\Twig\TestProject\Service;
 use Berlioz\Package\Twig\Twig;
 use Berlioz\Package\Twig\TwigExtension;
 use PHPUnit\Framework\TestCase;
@@ -42,7 +43,7 @@ class TwigTest extends TestCase
             $globals =
                 [
                     'foo' => 'bar',
-                    'bar' => 'foo'
+                    'bar' => 'foo',
                 ]
         );
 
@@ -72,6 +73,24 @@ class TwigTest extends TestCase
         $this->assertEquals($globals, $twig->getEnvironment()->getGlobals());
         $this->assertTrue($twig->getEnvironment()->isDebug());
         $this->assertFalse($twig->getEnvironment()->getCache());
+    }
+
+    public function testDynamicGlobal()
+    {
+        $core = new Core(new FakeDefaultDirectories(), false);
+        $twig = new Twig(
+            $core,
+            [],
+            [],
+            [],
+            ['service' => '@service']
+        );
+
+        $this->assertInstanceOf(Service::class, $twig->getEnvironment()->getGlobals()['service']);
+        $this->assertSame(
+            $core->getServiceContainer()->get(Service::class),
+            $twig->getEnvironment()->getGlobals()['service']
+        );
     }
 
     public function testRender()

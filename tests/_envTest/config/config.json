@@ -1,4 +1,9 @@
 {
+  "services": {
+    "service": {
+      "class": "Berlioz\\Package\\Twig\\TestProject\\Service"
+    }
+  },
   "controllers": [
     "Berlioz\\HttpCore\\TestProject\\Controller\\ControllerOne",
     "Berlioz\\HttpCore\\TestProject\\Controller\\ControllerTwo"

@@ -108,7 +108,14 @@ class Twig implements CoreAwareInterface
 
         // Add globals
         foreach ($globals as $name => $value) {
-            $this->getEnvironment()->addGlobal($name, $value);
+            $this->getCore()
+                ->getServiceContainer()
+                ->getInstantiator()
+                ->invokeMethod(
+                    $this->getEnvironment(),
+                    'addGlobal',
+                    ['name' => $name, 'value' => $value]
+                );
         }
     }
 
