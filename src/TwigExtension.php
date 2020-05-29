@@ -3,7 +3,7 @@
  * This file is part of Berlioz framework.
  *
  * @license   https://opensource.org/licenses/MIT MIT License
- * @copyright 2018 Ronan GIRON
+ * @copyright 2020 Ronan GIRON
  * @author    Ronan GIRON <https://github.com/ElGigi>
  *
  * For the full copyright and license information, please view the LICENSE
@@ -20,10 +20,13 @@ use Berlioz\Core\Asset\Manifest;
 use Berlioz\Core\Core;
 use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
+use DateTime;
 use DateTimeInterface;
 use Exception;
 use IntlDateFormatter;
+use RuntimeException;
 use Throwable;
+use Twig\Error\Error;
 use Twig\Error\RuntimeError;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
@@ -38,6 +41,7 @@ use Twig\TwigTest;
 class TwigExtension extends AbstractExtension implements CoreAwareInterface
 {
     use CoreAwareTrait;
+
     const H2PUSH_CACHE_COOKIE = 'h2pushes';
     /** @var array Cache for HTTP2 push */
     private $h2pushCache = [];
@@ -47,7 +51,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * TwigExtension constructor.
      *
-     * @param \Berlioz\Core\Core $core
+     * @param Core $core
      */
     public function __construct(Core $core)
     {
@@ -62,7 +66,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Returns a list of filters to add to the existing list.
      *
-     * @return \Twig\TwigFilter[]
+     * @return TwigFilter[]
      */
     public function getFilters()
     {
@@ -80,16 +84,20 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Filter to format date.
      *
-     * @param \DateTime|int $datetime DateTime object or timestamp
+     * @param DateTime|int $datetime DateTime object or timestamp
      * @param string $pattern Pattern of date result waiting
      * @param string $locale Locale for pattern translation
      *
      * @return string
-     * @throws \RuntimeException if application not accessible
+     * @throws RuntimeException if application not accessible
      */
     public function filterDateFormat($datetime, string $pattern = 'dd/MM/yyyy', string $locale = null): string
     {
-        $fmt = new IntlDateFormatter($locale ?? $this->getCore()->getLocale(), IntlDateFormatter::FULL, IntlDateFormatter::FULL);
+        $fmt = new IntlDateFormatter(
+            $locale ?? $this->getCore()->getLocale(),
+            IntlDateFormatter::FULL,
+            IntlDateFormatter::FULL
+        );
         $fmt->setPattern((string)$pattern);
 
         if ($datetime instanceof DateTimeInterface) {
@@ -116,7 +124,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Returns a list of functions to add to the existing list.
      *
-     * @return \Twig\TwigFunction[]
+     * @return TwigFunction[]
      */
     public function getFunctions()
     {
@@ -137,7 +145,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param array $parameters
      *
      * @return string
-     * @throws \Twig\Error\Error
+     * @throws Error
      */
     public function functionPath(string $name, array $parameters = []): string
     {
@@ -161,13 +169,13 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param Manifest|null $manifest
      *
      * @return string
-     * @throws \Twig\Error\Error
+     * @throws Error
      */
     public function functionAsset(string $key, ?Manifest $manifest = null): string
     {
         try {
             if (is_null($manifest)) {
-                /** @var \Berlioz\Core\Asset\Assets $assets */
+                /** @var Assets $assets */
                 $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
                 $manifest = $assets->getManifest();
             }
@@ -193,15 +201,19 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param EntryPoints|null $entryPointsObj
      *
      * @return string
-     * @throws \Twig\Error\Error
+     * @throws Error
      */
-    public function functionEntryPoints(string $entry, ?string $type = null, array $options = [], ?EntryPoints $entryPointsObj = null): string
-    {
+    public function functionEntryPoints(
+        string $entry,
+        ?string $type = null,
+        array $options = [],
+        ?EntryPoints $entryPointsObj = null
+    ): string {
         try {
             $output = '';
 
             if (is_null($entryPointsObj)) {
-                /** @var \Berlioz\Core\Asset\Assets $assets */
+                /** @var Assets $assets */
                 $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
                 $entryPointsObj = $assets->getEntryPoints();
             }
@@ -227,7 +239,10 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
                     switch ($type) {
                         case 'js':
                             if (isset($options['preload'])) {
-                                $entryPoint = $this->functionPreload($entryPoint, array_merge(['as' => 'script'], $preloadOptions));
+                                $entryPoint = $this->functionPreload(
+                                    $entryPoint,
+                                    array_merge(['as' => 'script'], $preloadOptions)
+                                );
                             }
 
                             // Defer/Async?
@@ -235,11 +250,18 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
                             $deferOrAsync .= ($options['defer'] ?? false) === true ? ' defer' : '';
                             $deferOrAsync .= ($options['async'] ?? false) === true ? ' async' : '';
 
-                            $output .= sprintf('<script src="%s"%s></script>', strip_tags($entryPoint), $deferOrAsync) . PHP_EOL;
+                            $output .= sprintf(
+                                    '<script src="%s"%s></script>',
+                                    strip_tags($entryPoint),
+                                    $deferOrAsync
+                                ) . PHP_EOL;
                             break;
                         case 'css':
                             if (isset($options['preload'])) {
-                                $entryPoint = $this->functionPreload($entryPoint, array_merge(['as' => 'style'], $preloadOptions));
+                                $entryPoint = $this->functionPreload(
+                                    $entryPoint,
+                                    array_merge(['as' => 'style'], $preloadOptions)
+                                );
                             }
 
                             $output .= sprintf('<link rel="stylesheet" href="%s">', strip_tags($entryPoint)) . PHP_EOL;
@@ -261,12 +283,12 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
      * @param string|null $type
      *
      * @return array
-     * @throws \Twig\Error\Error
+     * @throws Error
      */
     public function functionEntryPointsList(string $entry, ?string $type = null): array
     {
         try {
-            /** @var \Berlioz\Core\Asset\Assets $assets */
+            /** @var Assets $assets */
             $assets = $this->getCore()->getServiceContainer()->get(Assets::class);
 
             return $assets->getEntryPoints()->get($entry, $type);
@@ -337,7 +359,7 @@ class TwigExtension extends AbstractExtension implements CoreAwareInterface
     /**
      * Returns a list of tests to add to the existing list.
      *
-     * @return \Twig\TwigTest[]
+     * @return TwigTest[]
      */
     public function getTests()
     {

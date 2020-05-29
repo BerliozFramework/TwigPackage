@@ -3,7 +3,7 @@
  * This file is part of Berlioz framework.
  *
  * @license   https://opensource.org/licenses/MIT MIT License
- * @copyright 2018 Ronan GIRON
+ * @copyright 2020 Ronan GIRON
  * @author    Ronan GIRON <https://github.com/ElGigi>
  *
  * For the full copyright and license information, please view the LICENSE
@@ -15,6 +15,8 @@ declare(strict_types=1);
 namespace Berlioz\Package\Twig\Controller;
 
 use Berlioz\Core\CoreAwareInterface;
+use Berlioz\Core\Exception\BerliozException;
+use Twig\Error\Error;
 
 /**
  * Interface RenderingControllerInterface.
@@ -30,8 +32,8 @@ interface RenderingControllerInterface extends CoreAwareInterface
      * @param mixed[] $variables Variables for template
      *
      * @return string Output content
-     * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig\Error\Error
+     * @throws BerliozException
+     * @throws Error
      */
     public function render(string $name, array $variables = []): string;
 
@@ -43,8 +45,8 @@ interface RenderingControllerInterface extends CoreAwareInterface
      * @param array $variables Variables
      *
      * @return string
-     * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig\Error\Error
+     * @throws BerliozException
+     * @throws Error
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string;
 }

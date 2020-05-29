@@ -3,7 +3,7 @@
  * This file is part of Berlioz framework.
  *
  * @license   https://opensource.org/licenses/MIT MIT License
- * @copyright 2018 Ronan GIRON
+ * @copyright 2020 Ronan GIRON
  * @author    Ronan GIRON <https://github.com/ElGigi>
  *
  * For the full copyright and license information, please view the LICENSE
@@ -14,9 +14,13 @@ declare(strict_types=1);
 
 namespace Berlioz\Package\Twig;
 
+use Berlioz\Config\Exception\ConfigException;
 use Berlioz\Config\ExtendedJsonConfig;
 use Berlioz\Core\Core;
+use Berlioz\Core\Exception\BerliozException;
 use Berlioz\Core\Package\AbstractPackage;
+use Berlioz\ServiceContainer\Exception\ContainerException;
+use Berlioz\ServiceContainer\Exception\InstantiatorException;
 use Berlioz\ServiceContainer\Service;
 
 /**
@@ -32,26 +36,27 @@ class TwigPackage extends AbstractPackage
 
     /**
      * @inheritdoc
-     * @throws \Berlioz\Config\Exception\ConfigException
+     * @throws ConfigException
      */
     public static function config()
     {
         return new ExtendedJsonConfig(
             implode(
-                DIRECTORY_SEPARATOR, [
-                __DIR__,
-                '..',
-                'resources',
-                'config.default.json',
-            ]
+                DIRECTORY_SEPARATOR,
+                [
+                    __DIR__,
+                    '..',
+                    'resources',
+                    'config.default.json',
+                ]
             ), true
         );
     }
 
     /**
      * @inheritdoc
-     * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Berlioz\ServiceContainer\Exception\ContainerException
+     * @throws BerliozException
+     * @throws ContainerException
      */
     public static function register(Core $core): void
     {
@@ -68,13 +73,13 @@ class TwigPackage extends AbstractPackage
     /**
      * Twig factory.
      *
-     * @param \Berlioz\Core\Core $core
+     * @param Core $core
      *
-     * @return \Berlioz\Package\Twig\Twig
-     * @throws \Berlioz\Config\Exception\ConfigException
-     * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Berlioz\ServiceContainer\Exception\ContainerException
-     * @throws \Berlioz\ServiceContainer\Exception\InstantiatorException
+     * @return Twig
+     * @throws ConfigException
+     * @throws BerliozException
+     * @throws ContainerException
+     * @throws InstantiatorException
      */
     public static function twigFactory(Core $core): Twig
     {

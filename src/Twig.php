@@ -3,7 +3,7 @@
  * This file is part of Berlioz framework.
  *
  * @license   https://opensource.org/licenses/MIT MIT License
- * @copyright 2018 Ronan GIRON
+ * @copyright 2020 Ronan GIRON
  * @author    Ronan GIRON <https://github.com/ElGigi>
  *
  * For the full copyright and license information, please view the LICENSE
@@ -19,10 +19,13 @@ use Berlioz\Core\CoreAwareInterface;
 use Berlioz\Core\CoreAwareTrait;
 use Berlioz\Core\Debug;
 use Berlioz\Core\Exception\BerliozException;
+use Berlioz\ServiceContainer\Exception\ContainerException;
+use Berlioz\ServiceContainer\Exception\InstantiatorException;
 use Exception;
 use Throwable;
 use Twig\Environment;
 use Twig\Error\Error;
+use Twig\Error\LoaderError;
 use Twig\Extension\DebugExtension;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
@@ -35,24 +38,25 @@ use Twig\Loader\FilesystemLoader;
 class Twig implements CoreAwareInterface
 {
     use CoreAwareTrait;
-    /** @var \Twig\Loader\ChainLoader */
+
+    /** @var ChainLoader */
     private $loader;
-    /** @var \Twig\Environment */
+    /** @var Environment */
     private $twig;
 
     /**
      * Twig constructor.
      *
-     * @param \Berlioz\Core\Core $core Berlioz Core
+     * @param Core $core Berlioz Core
      * @param array $paths Twig paths
      * @param array $options Twig options
      * @param string[] $extensions Twig extensions classes
      * @param array $globals Globals variables
      *
-     * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Berlioz\ServiceContainer\Exception\ContainerException
-     * @throws \Berlioz\ServiceContainer\Exception\InstantiatorException
-     * @throws \Twig\Error\LoaderError
+     * @throws BerliozException
+     * @throws ContainerException
+     * @throws InstantiatorException
+     * @throws LoaderError
      */
     public function __construct(
         Core $core,
@@ -65,7 +69,9 @@ class Twig implements CoreAwareInterface
 
         // Twig
         $this->loader = new ChainLoader();
-        $this->loader->addLoader($fileLoader = new FilesystemLoader([], $this->getCore()->getDirectories()->getAppDir()));
+        $this->loader->addLoader(
+            $fileLoader = new FilesystemLoader([], $this->getCore()->getDirectories()->getAppDir())
+        );
         $this->twig = new Environment($this->loader, $options);
 
         // Debug?
@@ -82,17 +88,19 @@ class Twig implements CoreAwareInterface
         $extensions = array_unique($extensions);
         foreach ($extensions as $extension) {
             if (!is_object($extension)) {
-                $extension = $this->getCore()
-                    ->getServiceContainer()
-                    ->getInstantiator()
-                    ->newInstanceOf(
-                        $extension,
-                        [
-                            'templating' => $this,
-                            'twigLoader' => $this->loader,
-                            'twig' => $this->twig,
-                        ]
-                    );
+                $extension =
+                    $this
+                        ->getCore()
+                        ->getServiceContainer()
+                        ->getInstantiator()
+                        ->newInstanceOf(
+                            $extension,
+                            [
+                                'templating' => $this,
+                                'twigLoader' => $this->loader,
+                                'twig' => $this->twig,
+                            ]
+                        );
             }
 
             $this->getEnvironment()->addExtension($extension);
@@ -100,14 +108,7 @@ class Twig implements CoreAwareInterface
 
         // Add globals
         foreach ($globals as $name => $value) {
-            $this->getCore()
-                ->getServiceContainer()
-                ->getInstantiator()
-                ->invokeMethod(
-                    $this->getEnvironment(),
-                    'addGlobal',
-                    ['name' => $name, 'value' => $value]
-                );
+            $this->getEnvironment()->addGlobal($name, $value);
         }
     }
 
@@ -124,7 +125,7 @@ class Twig implements CoreAwareInterface
     /**
      * Get Twig loader.
      *
-     * @return \Twig\Loader\ChainLoader
+     * @return ChainLoader
      */
     public function getLoader(): ChainLoader
     {
@@ -134,7 +135,7 @@ class Twig implements CoreAwareInterface
     /**
      * Get Twig environment.
      *
-     * @return \Twig\Environment
+     * @return Environment
      */
     public function getEnvironment(): Environment
     {
@@ -142,9 +143,14 @@ class Twig implements CoreAwareInterface
     }
 
     /**
-     * @inheritdoc
-     * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig\Error\Error
+     * Render template.
+     *
+     * @param string $name Template name
+     * @param array $variables
+     *
+     * @return string
+     * @throws BerliozException
+     * @throws Error
      */
     public function render(string $name, array $variables = []): string
     {
@@ -155,9 +161,7 @@ class Twig implements CoreAwareInterface
 
         // Twig rendering
         try {
-            $str = $this->getEnvironment()->render($name, $variables);
-
-            return $str;
+            return $this->getEnvironment()->render($name, $variables);
         } catch (Error $e) {
             throw $e;
         } catch (Exception $e) {
@@ -171,8 +175,13 @@ class Twig implements CoreAwareInterface
     }
 
     /**
-     * @inheritdoc
-     * @throws \Twig\Error\Error
+     * Has block in template?
+     *
+     * @param string $name Template name
+     * @param string $blockName Block name
+     *
+     * @return bool
+     * @throws Error
      */
     public function hasBlock(string $name, string $blockName): bool
     {
@@ -182,9 +191,15 @@ class Twig implements CoreAwareInterface
     }
 
     /**
-     * @inheritdoc
-     * @throws \Berlioz\Core\Exception\BerliozException
-     * @throws \Twig\Error\Error
+     * Render block of template.
+     *
+     * @param string $name Template name
+     * @param string $blockName Block name
+     * @param array $variables
+     *
+     * @return string
+     * @throws BerliozException
+     * @throws Error
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string
     {

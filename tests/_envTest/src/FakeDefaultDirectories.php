@@ -10,8 +10,14 @@
  * file that was distributed with this source code, to the root.
  */
 
-$file = __DIR__ . '/../vendor/autoload.php';
-if (!file_exists($file)) {
-    throw new RuntimeException('Install dependencies using composer to run the test suite.');
+namespace Berlioz\Package\Twig\TestProject;
+
+use Berlioz\Core\Directories\DefaultDirectories;
+
+class FakeDefaultDirectories extends DefaultDirectories
+{
+    protected function getLibraryDirectory(): string
+    {
+        return realpath(__DIR__ . '/../vendor/berlioz/core');
+    }
 }
-$autoload = require_once $file;
