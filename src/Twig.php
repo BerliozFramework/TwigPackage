@@ -34,8 +34,6 @@ use Twig\RuntimeLoader\ContainerRuntimeLoader;
 
 /**
  * Class Twig.
- *
- * @package Berlioz\Package\Twig
  */
 class Twig
 {
