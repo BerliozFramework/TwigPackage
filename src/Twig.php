@@ -14,35 +14,34 @@ declare(strict_types=1);
 
 namespace Berlioz\Package\Twig;
 
+use Berlioz\Config\Exception\ConfigException;
 use Berlioz\Core\Core;
-use Berlioz\Core\CoreAwareInterface;
-use Berlioz\Core\CoreAwareTrait;
-use Berlioz\Core\Debug;
 use Berlioz\Core\Exception\BerliozException;
+use Berlioz\Package\Twig\Exception\TwigException;
 use Berlioz\ServiceContainer\Exception\ContainerException;
-use Berlioz\ServiceContainer\Exception\InstantiatorException;
 use Exception;
 use Throwable;
 use Twig\Environment;
 use Twig\Error\Error;
 use Twig\Error\LoaderError;
 use Twig\Extension\DebugExtension;
+use Twig\Extension\ExtensionInterface;
+use Twig\Extension\ProfilerExtension;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
+use Twig\Profiler\Profile;
+use Twig\RuntimeLoader\ContainerRuntimeLoader;
 
 /**
  * Class Twig.
  *
  * @package Berlioz\Package\Twig
  */
-class Twig implements CoreAwareInterface
+class Twig
 {
-    use CoreAwareTrait;
-
-    /** @var ChainLoader */
-    private $loader;
-    /** @var Environment */
-    private $twig;
+    private ChainLoader $loader;
+    private Environment $twig;
+    private ?Profile $profile = null;
 
     /**
      * Twig constructor.
@@ -53,30 +52,34 @@ class Twig implements CoreAwareInterface
      * @param string[] $extensions Twig extensions classes
      * @param array $globals Globals variables
      *
-     * @throws BerliozException
      * @throws ContainerException
-     * @throws InstantiatorException
      * @throws LoaderError
+     * @throws TwigException
+     * @throws ConfigException
      */
     public function __construct(
-        Core $core,
+        protected Core $core,
         array $paths = [],
         array $options = [],
         array $extensions = [],
         array $globals = []
     ) {
-        $this->setCore($core);
-
         // Twig
         $this->loader = new ChainLoader();
-        $this->loader->addLoader(
-            $fileLoader = new FilesystemLoader([], $this->getCore()->getDirectories()->getAppDir())
-        );
+        $this->loader->addLoader($fileLoader = new FilesystemLoader([], $this->core->getDirectories()->getAppDir()));
         $this->twig = new Environment($this->loader, $options);
 
-        // Debug?
-        if ($options['debug'] ?? false) {
-            $this->getEnvironment()->addExtension(new DebugExtension());
+        // Add runtime loader with container
+        $this->twig->addRuntimeLoader(new ContainerRuntimeLoader($core->getContainer()));
+
+        // Debug mode only if not a production environment
+        if (Core::ENV_PROD !== $this->core->getEnv() && $this->core->getDebug()->isEnabled()) {
+            $this->addExtension(new DebugExtension());
+        }
+
+        if ($this->core->getDebug()->isEnabled()) {
+            $this->profile = new Profile();
+            $this->twig->addExtension(new ProfilerExtension($this->profile));
         }
 
         // Paths
@@ -85,38 +88,10 @@ class Twig implements CoreAwareInterface
         }
 
         // Add extensions
-        $extensions = array_unique($extensions);
-        foreach ($extensions as $extension) {
-            if (!is_object($extension)) {
-                $extension =
-                    $this
-                        ->getCore()
-                        ->getServiceContainer()
-                        ->getInstantiator()
-                        ->newInstanceOf(
-                            $extension,
-                            [
-                                'templating' => $this,
-                                'twigLoader' => $this->loader,
-                                'twig' => $this->twig,
-                            ]
-                        );
-            }
-
-            $this->getEnvironment()->addExtension($extension);
-        }
+        $this->addExtension(...$extensions);
 
         // Add globals
-        foreach ($globals as $name => $value) {
-            $this->getCore()
-                ->getServiceContainer()
-                ->getInstantiator()
-                ->invokeMethod(
-                    $this->getEnvironment(),
-                    'addGlobal',
-                    ['name' => $name, 'value' => $value]
-                );
-        }
+        $this->addGlobals($globals);
     }
 
     /**
@@ -150,6 +125,96 @@ class Twig implements CoreAwareInterface
     }
 
     /**
+     * Get profile.
+     *
+     * @return Profile|null
+     */
+    public function getProfile(): ?Profile
+    {
+        return $this->profile;
+    }
+
+    /**
+     * Add extension.
+     *
+     * @param ExtensionInterface|string ...$extension
+     *
+     * @throws ContainerException
+     * @throws TwigException
+     */
+    public function addExtension(ExtensionInterface|string ...$extension): void
+    {
+        foreach ($extension as $anExtension) {
+            if (is_string($anExtension)) {
+                $anExtension = $this->newExtensionFromString($anExtension);
+            }
+
+            if (false === ($anExtension instanceof ExtensionInterface)) {
+                throw TwigException::invalidExtension($anExtension);
+            }
+
+            $this->twig->addExtension($anExtension);
+        }
+    }
+
+    /**
+     * New extension from string.
+     *
+     * @param string $extension
+     *
+     * @return ExtensionInterface
+     * @throws ContainerException
+     */
+    protected function newExtensionFromString(string $extension): ExtensionInterface
+    {
+        if (str_starts_with($extension, '@')) {
+            return $this->core->getContainer()->get(substr($extension, 1));
+        }
+
+        return
+            $this->core->getContainer()->call(
+                $extension,
+                [
+                    'templating' => $this,
+                    'twigLoader' => $this->loader,
+                    'twig' => $this->twig,
+                ]
+            );
+    }
+
+    /**
+     * Add globals.
+     *
+     * @param array $globals
+     */
+    public function addGlobals(array $globals): void
+    {
+        array_walk($globals, fn($value, $name) => $this->addGlobal($name, $value));
+    }
+
+    /**
+     * Add global.
+     *
+     * @param string $name
+     * @param mixed $value
+     */
+    public function addGlobal(string $name, mixed $value): void
+    {
+        if (is_string($value) && str_starts_with($value, '@')) {
+            if ($this->core->getContainer()->has(substr($value, 1))) {
+                $this->getEnvironment()->addGlobal($name, $this->core->getContainer()->get(substr($value, 1)));
+                return;
+            }
+        }
+
+        $this->getEnvironment()->addGlobal($name, $value);
+    }
+
+    /////////////////
+    /// RENDERING ///
+    /////////////////
+
+    /**
      * Render template.
      *
      * @param string $name Template name
@@ -161,10 +226,10 @@ class Twig implements CoreAwareInterface
      */
     public function render(string $name, array $variables = []): string
     {
-        $twigActivity =
-            (new Debug\Activity('Twig rendering'))
-                ->start()
-                ->setDescription(sprintf('Rendering of template "%s"', $name));
+        $twigActivity = $this->core->getDebug()->newActivity('Twig rendering');
+        $twigActivity
+            ->start()
+            ->setDescription(sprintf('Rendering of template "%s"', $name));
 
         // Twig rendering
         try {
@@ -176,8 +241,7 @@ class Twig implements CoreAwareInterface
         } catch (Throwable $e) {
             throw new BerliozException('An error occurred during rendering', 0, $e);
         } finally {
-            // Debug
-            $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
+            $twigActivity->end();
         }
     }
 
@@ -192,9 +256,7 @@ class Twig implements CoreAwareInterface
      */
     public function hasBlock(string $name, string $blockName): bool
     {
-        $template = $this->getEnvironment()->load($name);
-
-        return $template->hasBlock($blockName);
+        return $this->getEnvironment()->load($name)->hasBlock($blockName);
     }
 
     /**
@@ -210,23 +272,16 @@ class Twig implements CoreAwareInterface
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string
     {
-        $twigActivity =
-            (new Debug\Activity('Twig block rendering'))
-                ->start()
-                ->setDescription(
-                    sprintf(
-                        'Rendering of block "%s" in template "%s"',
-                        $blockName,
-                        $name
-                    )
-                );
+        $twigActivity = $this->core->getDebug()->newActivity('Twig block rendering');
+        $twigActivity
+            ->start()
+            ->setDescription(sprintf('Rendering of block "%s" in template "%s"', $blockName, $name));
 
         // Twig rendering
         try {
             $template = $this->getEnvironment()->load($name);
-            $str = $template->renderBlock($blockName, $variables);
 
-            return $str;
+            return $template->renderBlock($blockName, $variables);
         } catch (Error $e) {
             throw $e;
         } catch (Exception $e) {
@@ -234,8 +289,7 @@ class Twig implements CoreAwareInterface
         } catch (Throwable $e) {
             throw new BerliozException('An error occurred during rendering', 0, $e);
         } finally {
-            // Debug
-            $this->getCore()->getDebug()->getTimeLine()->addActivity($twigActivity->end());
+            $twigActivity->end();
         }
     }
 }

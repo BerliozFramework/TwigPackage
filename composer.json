@@ -18,27 +18,28 @@
   "autoload-dev": {
     "psr-4": {
       "Berlioz\\Package\\Twig\\Tests\\": "tests/",
-      "Berlioz\\Package\\Twig\\TestProject\\": "tests/_envTest/src/"
+      "Berlioz\\Package\\Twig\\TestProject\\": "tests_env/src/"
     },
     "exclude-from-classmap": [
-      "/tests/_envTest/"
+      "/tests_env/"
     ]
   },
+  "minimum-stability": "beta",
+  "prefer-stable": true,
   "require": {
-    "php": "^7.1 || ^8.0",
+    "php": "^8.0",
     "ext-intl": "*",
-    "ext-json": "*",
-    "berlioz/core": "^1.0",
+    "berlioz/core": "^2.0",
     "berlioz/helpers": "^1.0",
-    "twig/twig": "^2.7 || ^3.0",
-    "psr/log": "^1.0"
+    "twig/twig": "^3.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^7.5 || ^8.0 || ^9.0"
+    "berlioz/router": "^2.0",
+    "phpunit/phpunit": "^9.3"
   },
   "config": {
     "berlioz": {
-      "package": "Berlioz\\Package\\Twig\\TwigPackage"
+      "package": "Berlioz\\Package\\Twig\\BerliozPackage"
     }
   }
 }

@@ -13,33 +13,34 @@
 namespace Berlioz\Package\Twig\Tests;
 
 use Berlioz\Core\Core;
+use Berlioz\Package\Twig\Extension\DefaultExtension;
 use Berlioz\Package\Twig\TestProject\FakeDefaultDirectories;
 use Berlioz\Package\Twig\TestProject\Service;
 use Berlioz\Package\Twig\Twig;
-use Berlioz\Package\Twig\TwigExtension;
 use PHPUnit\Framework\TestCase;
 use Twig\Environment;
 use Twig\Error\LoaderError;
 use Twig\Loader\ChainLoader;
 use Twig\Loader\FilesystemLoader;
+use Twig\Profiler\Profile;
 
 class TwigTest extends TestCase
 {
-    public function test()
+    public function test__construct()
     {
         $core = new Core(new FakeDefaultDirectories(), false);
         $twig = new Twig(
             $core,
             $namespaces =
                 [
-                    'foo' => realpath(__DIR__ . '/_envTest/templates/foo'),
-                    'bar' => realpath(__DIR__ . '/_envTest/templates/bar'),
+                    'foo' => realpath(__DIR__ . '/../tests_env/resources/templates/foo'),
+                    'bar' => realpath(__DIR__ . '/../tests_env/resources/templates/bar'),
                 ],
             [
                 'debug' => true,
                 'cache' => false,
             ],
-            [TwigExtension::class],
+            [DefaultExtension::class],
             $globals =
                 [
                     'foo' => 'bar',
@@ -47,10 +48,9 @@ class TwigTest extends TestCase
                 ]
         );
 
-        $this->assertSame($core, $twig->getCore());
         $this->assertInstanceOf(Environment::class, $twig->getEnvironment());
         $this->assertContains(
-            TwigExtension::class,
+            DefaultExtension::class,
             array_map(
                 function ($value) {
                     return get_class($value);
@@ -75,6 +75,23 @@ class TwigTest extends TestCase
         $this->assertFalse($twig->getEnvironment()->getCache());
     }
 
+    public function testGetProfile()
+    {
+        $core = new Core(new FakeDefaultDirectories(), false);
+        $twig = new Twig($core);
+
+        $this->assertNull($twig->getProfile());
+    }
+
+    public function testGetProfile_debugEnabled()
+    {
+        $core = new Core(new FakeDefaultDirectories(), false);
+        $core->getDebug()->setEnabled(true);
+        $twig = new Twig($core);
+
+        $this->assertInstanceOf(Profile::class, $twig->getProfile());
+    }
+
     public function testDynamicGlobal()
     {
         $core = new Core(new FakeDefaultDirectories(), false);
@@ -88,7 +105,7 @@ class TwigTest extends TestCase
 
         $this->assertInstanceOf(Service::class, $twig->getEnvironment()->getGlobals()['service']);
         $this->assertSame(
-            $core->getServiceContainer()->get(Service::class),
+            $core->getContainer()->get(Service::class),
             $twig->getEnvironment()->getGlobals()['service']
         );
     }
@@ -98,19 +115,49 @@ class TwigTest extends TestCase
         $core = new Core(new FakeDefaultDirectories(), false);
         $twig = new Twig(
             $core,
-            ['bar' => realpath(__DIR__ . '/_envTest/templates/bar')],
+            ['bar' => realpath(__DIR__ . '/../tests_env/resources/templates/bar')],
             ['debug' => true, 'cache' => false]
         );
 
         $this->assertEquals('FOOBAR', $twig->render('@bar/bar.html.twig'));
         $this->assertEquals('FOOBARQUX', $twig->render('@bar/bar.html.twig', ['variable' => 'QUX']));
+    }
+
+    public function testRenderBlock()
+    {
+        $core = new Core(new FakeDefaultDirectories(), false);
+        $twig = new Twig(
+            $core,
+            ['bar' => realpath(__DIR__ . '/../tests_env/resources/templates/bar')],
+            ['debug' => true, 'cache' => false]
+        );
+
+        $this->assertEquals('BAR', $twig->renderBlock('@bar/bar.html.twig', 'bar'));
+        $this->assertEquals('BARQUX', $twig->renderBlock('@bar/bar.html.twig', 'bar', ['variable2' => 'QUX']));
+    }
+
+    public function testHasBlock()
+    {
+        $core = new Core(new FakeDefaultDirectories(), false);
+        $twig = new Twig(
+            $core,
+            ['bar' => realpath(__DIR__ . '/../tests_env/resources/templates/bar')],
+            ['debug' => true, 'cache' => false]
+        );
 
         $this->assertTrue($twig->hasBlock('@bar/bar.html.twig', 'bar'));
         $this->assertTrue($twig->hasBlock('@bar/bar.html.twig', 'foo'));
         $this->assertFalse($twig->hasBlock('@bar/bar.html.twig', 'qux'));
+    }
 
-        $this->assertEquals('BAR', $twig->renderBlock('@bar/bar.html.twig', 'bar'));
-        $this->assertEquals('BARQUX', $twig->renderBlock('@bar/bar.html.twig', 'bar', ['variable2' => 'QUX']));
+    public function testHasBlock_nonExistsTemplate()
+    {
+        $core = new Core(new FakeDefaultDirectories(), false);
+        $twig = new Twig(
+            $core,
+            ['bar' => realpath(__DIR__ . '/../tests_env/resources/templates/bar')],
+            ['debug' => true, 'cache' => false]
+        );
 
         $this->expectException(LoaderError::class);
         $this->assertFalse($twig->hasBlock('@bar/qux.html.twig', 'qux'));

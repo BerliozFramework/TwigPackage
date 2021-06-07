@@ -4,7 +4,7 @@
   "description": "Twig package for Berlioz Framework",
   "config": {
     "berlioz": {
-      "package": "Berlioz\\Package\\Twig\\TwigPackage"
+      "package": "Berlioz\\Package\\Twig\\BerliozPackage"
     }
   }
 }

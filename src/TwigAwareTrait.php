@@ -1,9 +1,9 @@
 <?php
-/**
+/*
  * This file is part of Berlioz framework.
  *
  * @license   https://opensource.org/licenses/MIT MIT License
- * @copyright 2020 Ronan GIRON
+ * @copyright 2021 Ronan GIRON
  * @author    Ronan GIRON <https://github.com/ElGigi>
  *
  * For the full copyright and license information, please view the LICENSE
@@ -12,32 +12,48 @@
 
 declare(strict_types=1);
 
-namespace Berlioz\Package\Twig\Controller;
+namespace Berlioz\Package\Twig;
 
-use Berlioz\Core\Core;
 use Berlioz\Core\Exception\BerliozException;
-use Berlioz\Package\Twig\Twig;
+use Berlioz\Package\Twig\Exception\TwigException;
 use Twig\Error\Error;
 
 /**
- * Trait RenderingControllerTrait.
- *
- * @package Berlioz\Package\Twig\Controller
+ * Describes a twig-aware instance.
  */
-trait RenderingControllerTrait
+trait TwigAwareTrait
 {
+    protected Twig|null $twig = null;
+
     /**
-     * Get core.
+     * Get twig.
      *
-     * @return Core|null
+     * @return Twig|null
      */
-    abstract public function getCore(): ?Core;
+    public function getTwig(): ?Twig
+    {
+        return $this->twig;
+    }
+
+    /**
+     * Set twig.
+     *
+     * @param Twig $twig
+     *
+     * @return static
+     */
+    public function setTwig(Twig $twig): static
+    {
+        $this->twig = $twig;
+
+        return $this;
+    }
 
     /**
      * Render a template.
      *
      * @param string $name Filename of template
-     * @param mixed[] $variables Variables for template
+     * @param array $variables Variables for template
      *
      * @return string Output content
      * @throws BerliozException
@@ -45,10 +61,7 @@ trait RenderingControllerTrait
      */
     public function render(string $name, array $variables = []): string
     {
-        /** @var Twig $twig */
-        $twig = $this->getCore()->getServiceContainer()->get(Twig::class);
-
-        return $twig->render($name, $variables);
+        return $this->getTwig()?->render($name, $variables) ?? throw TwigException::notLoaded();
     }
 
     /**
@@ -64,9 +77,6 @@ trait RenderingControllerTrait
      */
     public function renderBlock(string $name, string $blockName, array $variables = []): string
     {
-        /** @var Twig $twig */
-        $twig = $this->getCore()->getServiceContainer()->get(Twig::class);
-
-        return $twig->renderBlock($name, $blockName, $variables);
+        return $this->getTwig()?->renderBlock($name, $blockName, $variables) ?? throw TwigException::notLoaded();
     }
 }

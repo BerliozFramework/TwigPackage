@@ -12,22 +12,17 @@
 
 namespace Berlioz\Package\Twig\Tests;
 
-use Berlioz\Package\Twig\TwigPackage;
+use Berlioz\Config\Adapter\JsonAdapter;
+use Berlioz\Package\Twig\BerliozPackage;
 use PHPUnit\Framework\TestCase;
 
-class TwigPackageTest extends TestCase
+class BerliozPackageTest extends TestCase
 {
     public function testConfig()
     {
-        $config = TwigPackage::config();
+        $configFromPackage = (new BerliozPackage)->config();
+        $config = new JsonAdapter(__DIR__ . '/../resources/config.default.json', true);
 
-        $configContents = file_get_contents(__DIR__ . '/../resources/config.default.json');
-
-        $this->assertNotFalse($configContents);
-
-        $configExpected = json_decode($configContents, true);
-
-        $this->assertIsArray($configExpected);
-        $this->assertEquals($configExpected, $config->original());
+        $this->assertEquals($config->getArrayCopy(), $configFromPackage->getArrayCopy());
     }
 }
