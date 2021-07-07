@@ -10,6 +10,7 @@
       "Berlioz-TwigPackage": "{config: berlioz.directories.vendor}/berlioz/twig-package/resources"
     },
     "options": {
+      "debug": "{config: berlioz.debug.enable}",
       "cache": "{config: berlioz.directories.cache}/twig",
       "optimizations": -1
     },
