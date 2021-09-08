@@ -21,9 +21,6 @@ use Berlioz\Core\Exception\AssetException;
 use Twig\Error\Error;
 use Twig\Error\RuntimeError;
 
-/**
- * Class AssetRuntimeExtension.
- */
 class AssetRuntimeExtension
 {
     const H2PUSH_CACHE_COOKIE = 'h2pushes';
@@ -61,8 +58,6 @@ class AssetRuntimeExtension
             }
 
             return $manifest->get($key);
-        } catch (RuntimeError $exception) {
-            throw $exception;
         } catch (AssetException $exception) {
             throw new RuntimeError('Manifest treatment error', previous: $exception);
         }

@@ -20,9 +20,6 @@ use Berlioz\Core\Package\AbstractPackage;
 use Berlioz\Package\Twig\Container\ServiceProvider;
 use Berlioz\ServiceContainer\Container;
 
-/**
- * Class BerliozPackage.
- */
 class BerliozPackage extends AbstractPackage
 {
     /**

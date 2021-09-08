@@ -21,9 +21,6 @@ use Berlioz\Router\Router;
 use Twig\Error\Error;
 use Twig\Error\RuntimeError;
 
-/**
- * Class RouterRuntimeExtension.
- */
 class RouterRuntimeExtension
 {
     public function __construct(protected Router $router)

@@ -32,9 +32,6 @@ use Twig\Loader\FilesystemLoader;
 use Twig\Profiler\Profile;
 use Twig\RuntimeLoader\ContainerRuntimeLoader;
 
-/**
- * Class Twig.
- */
 class Twig
 {
     private ChainLoader $loader;

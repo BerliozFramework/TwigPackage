@@ -17,12 +17,8 @@ namespace Berlioz\Package\Twig\Debug;
 use Berlioz\Core\Debug\AbstractSection;
 use Berlioz\Core\Debug\DebugHandler;
 use Countable;
-use Twig\Profiler\Dumper\HtmlDumper;
 use Twig\Profiler\Profile;
 
-/**
- * Class TwigSection.
- */
 class TwigSection extends AbstractSection implements Countable
 {
     public function __construct(private Profile $profile)
@@ -58,15 +54,5 @@ class TwigSection extends AbstractSection implements Countable
      */
     public function snap(DebugHandler $debug): void
     {
-    }
-
-    /**
-     * Get profile.
-     *
-     * @return Profile
-     */
-    public function getProfile(): Profile
-    {
-        return $this->profile;
     }
 }

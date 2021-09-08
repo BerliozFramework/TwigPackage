@@ -18,9 +18,6 @@ use Berlioz\Core\Exception\BerliozException;
 use Berlioz\Package\Twig\TwigAwareInterface;
 use Twig\Extension\ExtensionInterface;
 
-/**
- * Class TwigException.
- */
 class TwigException extends BerliozException
 {
     /**

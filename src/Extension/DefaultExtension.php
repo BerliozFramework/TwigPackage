@@ -22,9 +22,6 @@ use Twig\Extension\AbstractExtension;
 use Twig\TwigFilter;
 use Twig\TwigTest;
 
-/**
- * Class DefaultExtension.
- */
 class DefaultExtension extends AbstractExtension
 {
     /**

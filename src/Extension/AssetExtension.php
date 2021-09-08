@@ -17,9 +17,6 @@ namespace Berlioz\Package\Twig\Extension;
 use Twig\Extension\AbstractExtension;
 use Twig\TwigFunction;
 
-/**
- * Class AssetExtension.
- */
 class AssetExtension extends AbstractExtension
 {
     /**
