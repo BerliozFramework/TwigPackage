@@ -24,8 +24,7 @@
       "/tests_env/"
     ]
   },
-  "minimum-stability": "beta",
-  "prefer-stable": true,
+  "minimum-stability": "stable",
   "require": {
     "php": "^8.0",
     "ext-intl": "*",
@@ -34,8 +33,9 @@
     "twig/twig": "^3.0"
   },
   "require-dev": {
+    "berlioz/http-core": "^2.0",
     "berlioz/router": "^2.0",
-    "phpunit/phpunit": "^9.3"
+    "phpunit/phpunit": "^9.5"
   },
   "config": {
     "berlioz": {
