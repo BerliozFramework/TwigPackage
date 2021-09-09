@@ -55,4 +55,14 @@ class TwigSection extends AbstractSection implements Countable
     public function snap(DebugHandler $debug): void
     {
     }
+
+    /**
+     * Get profile.
+     *
+     * @return Profile
+     */
+    public function getProfile(): Profile
+    {
+        return $this->profile;
+    }
 }
