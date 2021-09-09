@@ -18,6 +18,7 @@ use Berlioz\Router\Exception\NotFoundException;
 use Berlioz\Router\Exception\RoutingException;
 use Berlioz\Router\RouteAttributes;
 use Berlioz\Router\Router;
+use Exception;
 use Twig\Error\Error;
 use Twig\Error\RuntimeError;
 
@@ -40,9 +41,9 @@ class RouterRuntimeExtension
     {
         try {
             return $this->router->generate($name, $parameters);
-        } catch (NotFoundException $exception) {
+        } catch (NotFoundException | RoutingException $exception) {
             throw new RuntimeError($exception->getMessage());
-        } catch (RoutingException $exception) {
+        } catch (Exception $exception) {
             throw new RuntimeError('Routing treatment error', previous: $exception);
         }
     }
@@ -62,9 +63,9 @@ class RouterRuntimeExtension
             $this->router->generate($name, $parameters);
 
             return true;
-        } catch (NotFoundException $exception) {
+        } catch (NotFoundException | RoutingException) {
             return false;
-        } catch (RoutingException $exception) {
+        } catch (Exception $exception) {
             throw new RuntimeError('Routing treatment error', previous: $exception);
         }
     }

@@ -108,12 +108,12 @@ class DefaultExtension extends AbstractExtension
     /**
      * Test instance of.
      *
-     * @param mixed $object The tested object
+     * @param object|string $object The tested object
      * @param string $class_name The class name
      *
      * @return bool
      */
-    public function testInstanceOf(mixed $object, string $class_name): bool
+    public function testInstanceOf(object|string $object, string $class_name): bool
     {
         return is_a($object, $class_name, true);
     }

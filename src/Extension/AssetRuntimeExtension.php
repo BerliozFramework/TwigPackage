@@ -195,6 +195,10 @@ class AssetRuntimeExtension
             $header .= '; nopush';
         }
 
+        if (true === headers_sent()) {
+            return $link;
+        }
+
         header($header, false);
 
         // Cache
