@@ -19,13 +19,10 @@ use Twig\Error\RuntimeError;
 
 class AssetRuntimeExtensionTest extends TestCase
 {
-//    private Assets $assets;
-    private mixed $assets;
+    private Assets $assets;
 
     protected function setUp(): void
     {
-//        $core = new Core(new FakeDefaultDirectories(), false);
-//        $this->assets = $core->getContainer()->get(Assets::class);
         $this->assets = new Assets(
             __DIR__ . '/data/manifest.json',
             __DIR__ . '/data/entrypoints.json',
@@ -54,8 +51,23 @@ class AssetRuntimeExtensionTest extends TestCase
 
         $this->assertEquals(
             '<link rel="stylesheet" href="/assets/css/website.css">' . PHP_EOL .
-            '<script src="/assets/js/website.js"></script>' . PHP_EOL,
+            '<script src="/assets/js/website.js"></script>' . PHP_EOL .
+            '<script src="/assets/js/vendor.js"></script>' . PHP_EOL,
             $extensionRuntime->entryPoints('website')
+        );
+    }
+
+    public function testEntryPoints_withMultipleEntry()
+    {
+        $extensionRuntime = new AssetRuntimeExtension($this->assets);
+
+        $this->assertEquals(
+            '<link rel="stylesheet" href="/assets/css/website.css">' . PHP_EOL .
+            '<link rel="stylesheet" href="/assets/css/admin.css">' . PHP_EOL .
+            '<script src="/assets/js/website.js"></script>' . PHP_EOL .
+            '<script src="/assets/js/vendor.js"></script>' . PHP_EOL .
+            '<script src="/assets/js/admin.js"></script>' . PHP_EOL,
+            $extensionRuntime->entryPoints(['website', 'admin'])
         );
     }
 
@@ -64,7 +76,8 @@ class AssetRuntimeExtensionTest extends TestCase
         $extensionRuntime = new AssetRuntimeExtension($this->assets);
 
         $this->assertEquals(
-            '<script src="/assets/js/website.js"></script>' . PHP_EOL,
+            '<script src="/assets/js/website.js"></script>' . PHP_EOL .
+            '<script src="/assets/js/vendor.js"></script>' . PHP_EOL,
             $extensionRuntime->entryPoints('website', 'js')
         );
     }
@@ -75,7 +88,8 @@ class AssetRuntimeExtensionTest extends TestCase
 
         $this->assertEquals(
             '<link rel="stylesheet" href="/assets/css/website.css">' . PHP_EOL .
-            '<script src="/assets/js/website.js" defer async></script>' . PHP_EOL,
+            '<script src="/assets/js/website.js" defer async></script>' . PHP_EOL .
+            '<script src="/assets/js/vendor.js" defer async></script>' . PHP_EOL,
             $extensionRuntime->entryPoints('website', options: ['async' => true, 'defer' => true])
         );
     }
@@ -92,8 +106,18 @@ class AssetRuntimeExtensionTest extends TestCase
         $extensionRuntime = new AssetRuntimeExtension($this->assets);
 
         $this->assertEquals(
-            ['css' => ['/assets/css/website.css'], 'js' => ['/assets/js/website.js']],
+            ['css' => ['/assets/css/website.css'], 'js' => ['/assets/js/website.js', '/assets/js/vendor.js']],
             $extensionRuntime->entryPointsList('website')
+        );
+    }
+
+    public function testEntryPointsList_withMultipleEntry()
+    {
+        $extensionRuntime = new AssetRuntimeExtension($this->assets);
+
+        $this->assertEquals(
+            ['/assets/js/website.js', '/assets/js/vendor.js', '/assets/js/admin.js'],
+            $extensionRuntime->entryPointsList(['website', 'admin'], 'js')
         );
     }
 
@@ -102,7 +126,7 @@ class AssetRuntimeExtensionTest extends TestCase
         $extensionRuntime = new AssetRuntimeExtension($this->assets);
 
         $this->assertEquals(
-            ['/assets/js/website.js'],
+            ['/assets/js/website.js', '/assets/js/vendor.js'],
             $extensionRuntime->entryPointsList('website', 'js')
         );
     }

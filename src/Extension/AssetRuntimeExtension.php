@@ -18,6 +18,7 @@ use Berlioz\Core\Asset\Assets;
 use Berlioz\Core\Asset\EntryPoints;
 use Berlioz\Core\Asset\Manifest;
 use Berlioz\Core\Exception\AssetException;
+use Throwable;
 use Twig\Error\Error;
 use Twig\Error\RuntimeError;
 
@@ -66,16 +67,17 @@ class AssetRuntimeExtension
     /**
      * Function to get entry points in html.
      *
-     * @param string $entry
+     * @param string|string[] $entry
      * @param string|null $type
      * @param array $options
      * @param EntryPoints|null $entryPointsObj
      *
      * @return string
      * @throws RuntimeError
+     * @throws AssetException
      */
     public function entryPoints(
-        string $entry,
+        string|array $entry,
         ?string $type = null,
         array $options = [],
         ?EntryPoints $entryPointsObj = null
@@ -145,19 +147,23 @@ class AssetRuntimeExtension
     /**
      * Function to get entry points list.
      *
-     * @param string $entry
+     * @param string|string[] $entry
      * @param string|null $type
      *
      * @return array
      * @throws RuntimeError
      */
-    public function entryPointsList(string $entry, ?string $type = null): array
+    public function entryPointsList(string|array $entry, ?string $type = null): array
     {
         if (null === $this->assets->getEntryPoints()) {
             throw new RuntimeError('No entry points file');
         }
 
-        return $this->assets->getEntryPoints()->get($entry, $type);
+        try {
+            return $this->assets->getEntryPoints()->get($entry, $type);
+        } catch (Throwable $exception) {
+            throw new RuntimeError('Entry points error', previous: $exception);
+        }
     }
 
     /**
