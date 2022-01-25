@@ -28,7 +28,7 @@
   "require": {
     "php": "^8.0",
     "ext-intl": "*",
-    "berlioz/core": "^2.0",
+    "berlioz/core": "^2.2",
     "berlioz/helpers": "^1.0",
     "twig/twig": "^3.0"
   },
