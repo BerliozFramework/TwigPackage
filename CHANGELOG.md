@@ -4,6 +4,17 @@ All notable changes to this project will be documented in this file. This projec
 to [Semantic Versioning] (http://semver.org/). For change log format,
 use [Keep a Changelog] (http://keepachangelog.com/).
 
+## [2.2.0] - 2022-02-11
+
+### Added
+
+- Tests for `preload` function
+
+### Changed
+
+- `entryPoints()` accept dynamic options
+- `preload()` accept dynamic options
+
 ## [2.1.0] - 2022-01-25
 
 ### Changed

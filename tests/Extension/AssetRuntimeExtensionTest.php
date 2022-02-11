@@ -87,10 +87,21 @@ class AssetRuntimeExtensionTest extends TestCase
         $extensionRuntime = new AssetRuntimeExtension($this->assets);
 
         $this->assertEquals(
-            '<link rel="stylesheet" href="/assets/css/website.css">' . PHP_EOL .
-            '<script src="/assets/js/website.js" defer async></script>' . PHP_EOL .
-            '<script src="/assets/js/vendor.js" defer async></script>' . PHP_EOL,
-            $extensionRuntime->entryPoints('website', options: ['async' => true, 'defer' => true])
+            '<link async defer attr="fake" data-first="value1" data-second="value2" data-third rel="stylesheet" href="/assets/css/website.css">' . PHP_EOL .
+            '<script async defer attr="fake" data-first="value1" data-second="value2" data-third src="/assets/js/website.js"></script>' . PHP_EOL .
+            '<script async defer attr="fake" data-first="value1" data-second="value2" data-third src="/assets/js/vendor.js"></script>' . PHP_EOL,
+            $extensionRuntime->entryPoints('website', options: [
+                'async' => true,
+                'defer' => true,
+                'attr' => 'fake',
+                'attr2' => null,
+                'data' => [
+                    'first' => 'value1',
+                    'second' => 'value2',
+                    'third' => true,
+                    'none' => null,
+                ]
+            ])
         );
     }
 
@@ -136,5 +147,90 @@ class AssetRuntimeExtensionTest extends TestCase
         $extensionRuntime = new AssetRuntimeExtension($this->assets);
 
         $this->assertEquals([], $extensionRuntime->entryPointsList('fake'));
+    }
+
+    public function providesPreload()
+    {
+        return [
+            [
+                'link' => 'https://getberlioz.com/fake',
+                'parameters' => [
+                    'crossorigin' => false,
+                ],
+                'expectedHeader' => 'Link: <https://getberlioz.com/fake>; rel=preload',
+                'expectedCookie' => [
+                    'h2pushes[d51704684c8d3f1febc7c281cc2c8f26]',
+                    '1',
+                    [
+                        'expires' => 0,
+                        'path' => '/',
+                        'domain' => '',
+                        'secure' => true,
+                        'httponly' => true,
+                        'samesite' => 'Strict',
+                    ]
+                ],
+            ],
+            [
+                'link' => 'https://getberlioz.com/fake',
+                'parameters' => [
+                    'crossorigin' => true,
+                ],
+                'expectedHeader' => 'Link: <https://getberlioz.com/fake>; rel=preload; crossorigin',
+                'expectedCookie' => [
+                    'h2pushes[d51704684c8d3f1febc7c281cc2c8f26]',
+                    '1',
+                    [
+                        'expires' => 0,
+                        'path' => '/',
+                        'domain' => '',
+                        'secure' => true,
+                        'httponly' => true,
+                        'samesite' => 'Strict',
+                    ]
+                ],
+            ],
+            [
+                'link' => 'https://getberlioz.com/fake',
+                'parameters' => [
+                    'nopush' => true,
+                    'crossorigin' => true,
+                ],
+                'expectedHeader' => 'Link: <https://getberlioz.com/fake>; rel=preload; nopush; crossorigin',
+                'expectedCookie' => null,
+            ]
+        ];
+    }
+
+    /**
+     * @dataProvider providesPreload
+     */
+    public function testPreload(string $link, array $parameters, ?string $expectedHeader, ?array $expectedCookie)
+    {
+        $headerArguments = $cookieArguments = null;
+
+        $assetRuntimeMock = $this->createPartialMock(
+            AssetRuntimeExtension::class,
+            ['isHeadersSent', 'sendHeader', 'setCookie']
+        );
+        $assetRuntimeMock
+            ->method('isHeadersSent')
+            ->willReturnCallback(fn() => false);
+        $assetRuntimeMock
+            ->method('sendHeader')
+            ->willReturnCallback(function ($header) use (&$headerArguments) {
+                $headerArguments = $header;
+            });
+        $assetRuntimeMock
+            ->method('setCookie')
+            ->willReturnCallback(function (...$args) use (&$cookieArguments) {
+                $cookieArguments = $args;
+            });
+
+        $result = $assetRuntimeMock->preload($link, $parameters);
+
+        $this->assertEquals($link, $result);
+        $this->assertEquals($expectedHeader, $headerArguments);
+        $this->assertEquals($expectedCookie, $cookieArguments);
     }
 }

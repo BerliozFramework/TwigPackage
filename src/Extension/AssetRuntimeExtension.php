@@ -115,16 +115,12 @@ class AssetRuntimeExtension
                                 $entryPoint,
                                 array_merge(['as' => 'script'], $preloadOptions)
                             );
+                            unset($options['preload']);
                         }
 
-                        // Defer/Async?
-                        $deferOrAsync = ($options['defer'] ?? false) === true ? ' defer' : '';
-                        $deferOrAsync .= ($options['async'] ?? false) === true ? ' async' : '';
-
                         $output .= sprintf(
-                                '<script src="%s"%s></script>',
-                                strip_tags($entryPoint),
-                                $deferOrAsync
+                                '<script%s></script>',
+                                $this->attributes(array_replace($options, ['src' => $entryPoint])),
                             ) . PHP_EOL;
                         break;
                     case 'css':
@@ -133,9 +129,18 @@ class AssetRuntimeExtension
                                 $entryPoint,
                                 array_merge(['as' => 'style'], $preloadOptions)
                             );
+                            unset($options['preload']);
                         }
 
-                        $output .= sprintf('<link rel="stylesheet" href="%s">', strip_tags($entryPoint)) . PHP_EOL;
+                        $output .= sprintf(
+                                '<link%s>',
+                                $this->attributes(
+                                    array_replace(
+                                        $options,
+                                        ['rel' => 'stylesheet', 'href' => $entryPoint]
+                                    )
+                                ),
+                            ) . PHP_EOL;
                         break;
                 }
             }
@@ -167,6 +172,38 @@ class AssetRuntimeExtension
     }
 
     /**
+     * Make attributes.
+     *
+     * @param $attrs
+     * @param string|null $prefix
+     *
+     * @return string
+     */
+    private function attributes($attrs, ?string $prefix = null): string
+    {
+        $output = '';
+
+        foreach ($attrs as $key => $value) {
+            if (null === $value || false === $value) {
+                continue;
+            }
+
+            if (!empty($prefix)) {
+                $key = $prefix . '-' . $key;
+            }
+
+            if (is_array($value)) {
+                $output .= $this->attributes($value, $key);
+                continue;
+            }
+
+            $output .= ' ' . $key . (true !== $value ? '="' . htmlspecialchars($value) . '"' : '');
+        }
+
+        return $output;
+    }
+
+    /**
      * Function preload to pre loading of request for HTTP 2 protocol.
      *
      * @param string $link
@@ -176,42 +213,35 @@ class AssetRuntimeExtension
      */
     public function preload(string $link, array $parameters = []): string
     {
-        $push = !(!empty($parameters['nopush']) && $parameters['nopush'] == true);
-
-        if (true === $push && in_array(md5($link), $this->h2pushCache)) {
+        if (($push = (false === ($parameters['nopush'] ?? false))) && in_array(md5($link), $this->h2pushCache)) {
             return $link;
         }
 
         $header = sprintf('Link: <%s>; rel=preload', $link);
 
-        // as
-        if (!empty($parameters['as'])) {
-            $header = sprintf('%s; as=%s', $header, $parameters['as']);
-        }
-        // type
-        if (!empty($parameters['type'])) {
-            $header = sprintf('%s; type=%s', $header, $parameters['as']);
-        }
-        // crossorigin
-        if (!empty($parameters['crossorigin']) && $parameters['crossorigin'] == true) {
-            $header .= '; crossorigin';
-        }
-        // nopush
-        if (!$push) {
-            $header .= '; nopush';
+        foreach ($parameters as $key => $value) {
+            if (!is_scalar($value)) {
+                continue;
+            }
+
+            if (false === $value) {
+                continue;
+            }
+
+            $header .= '; ' . $key . (true !== $value ? '=' . $value : '');
         }
 
-        if (true === headers_sent()) {
+        if (true === $this->isHeadersSent()) {
             return $link;
         }
 
-        header($header, false);
+        $this->sendHeader($header, false);
 
         // Cache
         if ($push) {
             $this->h2pushCache[] = md5($link);
 
-            setcookie(
+            $this->setCookie(
                 sprintf('%s[%s]', self::H2PUSH_CACHE_COOKIE, md5($link)),
                 '1',
                 [
@@ -226,5 +256,42 @@ class AssetRuntimeExtension
         }
 
         return $link;
+    }
+
+    /**
+     * Is headers sent?
+     *
+     * @return bool
+     */
+    public function isHeadersSent(): bool
+    {
+        return headers_sent();
+    }
+
+    /**
+     * Send header.
+     *
+     * @param string $header
+     * @param bool $replace
+     *
+     * @return void
+     */
+    public function sendHeader(string $header, bool $replace = true): void
+    {
+        header($header, $replace);
+    }
+
+    /**
+     * Set cookie.
+     *
+     * @param string $name
+     * @param string $value
+     * @param array $options
+     *
+     * @return void
+     */
+    public function setCookie(string $name, string $value, array $options = []): void
+    {
+        setcookie($name, $value, $options);
     }
 }
