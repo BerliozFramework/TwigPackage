@@ -18,6 +18,7 @@ use Berlioz\Core\Asset\Assets;
 use Berlioz\Core\Asset\EntryPoints;
 use Berlioz\Core\Asset\Manifest;
 use Berlioz\Core\Exception\AssetException;
+use Berlioz\Router\Router;
 use Throwable;
 use Twig\Error\Error;
 use Twig\Error\RuntimeError;
@@ -27,14 +28,20 @@ class AssetRuntimeExtension
     const H2PUSH_CACHE_COOKIE = 'h2pushes';
     private array $h2pushCache = [];
 
-    public function __construct(protected Assets $assets)
-    {
+    public function __construct(
+        protected Assets $assets,
+        protected Router $router,
+    ) {
         // Get cache from cookies
         if (isset($_COOKIE[self::H2PUSH_CACHE_COOKIE]) && is_array($_COOKIE[self::H2PUSH_CACHE_COOKIE])) {
             $this->h2pushCache = array_keys($_COOKIE[self::H2PUSH_CACHE_COOKIE]);
         }
     }
 
+    protected function getRouter(): Router
+    {
+        return $this->router;
+    }
 
     /**
      * Function asset to get generate asset path.
@@ -58,7 +65,7 @@ class AssetRuntimeExtension
                 throw new RuntimeError(sprintf('Asset "%s" not found in manifest file', $key));
             }
 
-            return $manifest->get($key);
+            return $this->getRouter()->finalizePath($manifest->get($key));
         } catch (AssetException $exception) {
             throw new RuntimeError('Manifest treatment error', previous: $exception);
         }
@@ -120,7 +127,12 @@ class AssetRuntimeExtension
 
                         $output .= sprintf(
                                 '<script%s></script>',
-                                $this->attributes(array_replace($options, ['src' => $entryPoint])),
+                                $this->attributes(
+                                    array_replace(
+                                        $options,
+                                        ['src' => $this->getRouter()->finalizePath($entryPoint)]
+                                    )
+                                ),
                             ) . PHP_EOL;
                         break;
                     case 'css':
@@ -137,7 +149,10 @@ class AssetRuntimeExtension
                                 $this->attributes(
                                     array_replace(
                                         $options,
-                                        ['rel' => 'stylesheet', 'href' => $entryPoint]
+                                        [
+                                            'rel' => 'stylesheet',
+                                            'href' => $this->getRouter()->finalizePath($entryPoint)
+                                        ]
                                     )
                                 ),
                             ) . PHP_EOL;
@@ -165,7 +180,23 @@ class AssetRuntimeExtension
         }
 
         try {
-            return $this->assets->getEntryPoints()->get($entry, $type);
+            $list = $this->assets->getEntryPoints()->get($entry, $type);
+
+            return array_map(
+                function ($v) use ($type) {
+                    $v = array_map(
+                        fn($e) => $this->getRouter()->finalizePath($e),
+                        (array)$v
+                    );
+
+                    if (null !== $type) {
+                        return $v[0];
+                    }
+
+                    return $v;
+                },
+                $list
+            );
         } catch (Throwable $exception) {
             throw new RuntimeError('Entry points error', previous: $exception);
         }
@@ -232,7 +263,7 @@ class AssetRuntimeExtension
         }
 
         if (true === $this->isHeadersSent()) {
-            return $link;
+            return $this->getRouter()->finalizePath($link);
         }
 
         $this->sendHeader($header, false);
@@ -255,7 +286,7 @@ class AssetRuntimeExtension
             );
         }
 
-        return $link;
+        return $this->getRouter()->finalizePath($link);
     }
 
     /**

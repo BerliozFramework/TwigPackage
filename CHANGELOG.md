@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file. This projec
 to [Semantic Versioning] (http://semver.org/). For change log format,
 use [Keep a Changelog] (http://keepachangelog.com/).
 
+## [2.3.0] - 2024-12-04
+
+### Added
+
+- Prefixed assets with router
+- Conflict with `berlioz/router` < 2.5
+
 ## [2.2.0] - 2022-02-11
 
 ### Added

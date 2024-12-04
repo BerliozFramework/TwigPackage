@@ -1,45 +1,48 @@
 {
-  "name": "berlioz/twig-package",
-  "type": "berlioz-package",
-  "description": "Twig package for Berlioz Framework",
-  "license": "MIT",
-  "homepage": "https://getberlioz.com",
-  "authors": [
-    {
-      "name": "Ronan Giron",
-      "email": "ronan@getberlioz.com"
-    }
-  ],
-  "autoload": {
-    "psr-4": {
-      "Berlioz\\Package\\Twig\\": "src/"
-    }
-  },
-  "autoload-dev": {
-    "psr-4": {
-      "Berlioz\\Package\\Twig\\Tests\\": "tests/",
-      "Berlioz\\Package\\Twig\\TestProject\\": "tests_env/src/"
+    "name": "berlioz/twig-package",
+    "type": "berlioz-package",
+    "description": "Twig package for Berlioz Framework",
+    "license": "MIT",
+    "homepage": "https://getberlioz.com",
+    "authors": [
+        {
+            "name": "Ronan Giron",
+            "email": "ronan@getberlioz.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "Berlioz\\Package\\Twig\\": "src/"
+        }
     },
-    "exclude-from-classmap": [
-      "/tests_env/"
-    ]
-  },
-  "minimum-stability": "stable",
-  "require": {
-    "php": "^8.0",
-    "ext-intl": "*",
-    "berlioz/core": "^2.2",
-    "berlioz/helpers": "^1.0",
-    "twig/twig": "^3.0"
-  },
-  "require-dev": {
-    "berlioz/http-core": "^2.0",
-    "berlioz/router": "^2.0",
-    "phpunit/phpunit": "^9.5"
-  },
-  "config": {
-    "berlioz": {
-      "package": "Berlioz\\Package\\Twig\\BerliozPackage"
+    "autoload-dev": {
+        "psr-4": {
+            "Berlioz\\Package\\Twig\\Tests\\": "tests/",
+            "Berlioz\\Package\\Twig\\TestProject\\": "tests_env/src/"
+        },
+        "exclude-from-classmap": [
+            "/tests_env/"
+        ]
+    },
+    "minimum-stability": "stable",
+    "require": {
+        "php": "^8.0",
+        "ext-intl": "*",
+        "berlioz/core": "^2.2",
+        "berlioz/helpers": "^1.0",
+        "twig/twig": "^3.0"
+    },
+    "require-dev": {
+        "berlioz/http-core": "^2.0",
+        "berlioz/router": "^2.5",
+        "phpunit/phpunit": "^9.5"
+    },
+    "conflict": {
+        "berlioz/router": "<2.5"
+    },
+    "config": {
+        "berlioz": {
+            "package": "Berlioz\\Package\\Twig\\BerliozPackage"
+        }
     }
-  }
 }
