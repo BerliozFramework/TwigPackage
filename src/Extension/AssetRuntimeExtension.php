@@ -123,6 +123,8 @@ class AssetRuntimeExtension
                                 array_merge(['as' => 'script'], $preloadOptions)
                             );
                             unset($options['preload']);
+                        } else {
+                            $entryPoint = $this->getRouter()->finalizePath($entryPoint);
                         }
 
                         $output .= sprintf(
@@ -130,7 +132,7 @@ class AssetRuntimeExtension
                                 $this->attributes(
                                     array_replace(
                                         $options,
-                                        ['src' => $this->getRouter()->finalizePath($entryPoint)]
+                                        ['src' => $entryPoint]
                                     )
                                 ),
                             ) . PHP_EOL;
@@ -142,6 +144,8 @@ class AssetRuntimeExtension
                                 array_merge(['as' => 'style'], $preloadOptions)
                             );
                             unset($options['preload']);
+                        } else {
+                            $entryPoint = $this->getRouter()->finalizePath($entryPoint);
                         }
 
                         $output .= sprintf(
@@ -151,7 +155,7 @@ class AssetRuntimeExtension
                                         $options,
                                         [
                                             'rel' => 'stylesheet',
-                                            'href' => $this->getRouter()->finalizePath($entryPoint)
+                                            'href' => $entryPoint,
                                         ]
                                     )
                                 ),
