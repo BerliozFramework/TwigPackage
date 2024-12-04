@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file. This projec
 to [Semantic Versioning] (http://semver.org/). For change log format,
 use [Keep a Changelog] (http://keepachangelog.com/).
 
+## [2.4.0] - 2024-12-04
+
+### Added
+
+- Twig `finalize_path()` function
+
 ## [2.3.1] - 2024-12-04
 
 ### Fixed

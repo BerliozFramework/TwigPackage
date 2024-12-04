@@ -29,6 +29,7 @@ class RouterExtension extends AbstractExtension
         return [
             new TwigFunction('path', [RouterRuntimeExtension::class, 'functionPath']),
             new TwigFunction('path_exists', [RouterRuntimeExtension::class, 'functionPathExists']),
+            new TwigFunction('finalize_path', [RouterRuntimeExtension::class, 'functionFinalizePath']),
         ];
     }
 }

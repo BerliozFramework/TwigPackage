@@ -24,6 +24,7 @@ class RouterRuntimeExtensionTest extends TestCase
 
     protected function setUp(): void
     {
+        unset($_SERVER['HTTP_X_FORWARDED_PREFIX']);
         $this->router = new Router();
         $this->router->addRoute(
             new Route('/', name: 'home'),
@@ -73,5 +74,16 @@ class RouterRuntimeExtensionTest extends TestCase
         $this->assertTrue($extensionRuntime->functionPathExists('a-route', ['var' => 'foo', 'var2' => 'bar']));
         $this->assertFalse($extensionRuntime->functionPathExists('a-route'));
         $this->assertFalse($extensionRuntime->functionPathExists('unknown-route'));
+    }
+
+    public function testFunctionFinalizePath()
+    {
+        $extensionRuntime = new RouterRuntimeExtension(new Router(['X-Forwarded-Prefix' => true]));
+
+        $this->assertEquals('/path', $extensionRuntime->functionFinalizePath('/path'));
+
+        $_SERVER['HTTP_X_FORWARDED_PREFIX'] = '/prefix';
+
+        $this->assertEquals('/prefix/path', $extensionRuntime->functionFinalizePath('/path'));
     }
 }

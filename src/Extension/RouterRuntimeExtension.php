@@ -41,7 +41,7 @@ class RouterRuntimeExtension
     {
         try {
             return $this->router->generate($name, $parameters);
-        } catch (NotFoundException | RoutingException $exception) {
+        } catch (NotFoundException|RoutingException $exception) {
             throw new RuntimeError($exception->getMessage());
         } catch (Exception $exception) {
             throw new RuntimeError('Routing treatment error', previous: $exception);
@@ -63,10 +63,22 @@ class RouterRuntimeExtension
             $this->router->generate($name, $parameters);
 
             return true;
-        } catch (NotFoundException | RoutingException) {
+        } catch (NotFoundException|RoutingException) {
             return false;
         } catch (Exception $exception) {
             throw new RuntimeError('Routing treatment error', previous: $exception);
         }
+    }
+
+    /**
+     * Function to finalize a path.
+     *
+     * @param string $path
+     *
+     * @return string
+     */
+    public function functionFinalizePath(string $path): string
+    {
+        return $this->router->finalizePath($path);
     }
 }
