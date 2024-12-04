@@ -248,6 +248,8 @@ class AssetRuntimeExtension
      */
     public function preload(string $link, array $parameters = []): string
     {
+        $link = $this->getRouter()->finalizePath($link);
+
         if (($push = (false === ($parameters['nopush'] ?? false))) && in_array(md5($link), $this->h2pushCache)) {
             return $link;
         }
@@ -267,7 +269,7 @@ class AssetRuntimeExtension
         }
 
         if (true === $this->isHeadersSent()) {
-            return $this->getRouter()->finalizePath($link);
+            return $link;
         }
 
         $this->sendHeader($header, false);
@@ -290,7 +292,7 @@ class AssetRuntimeExtension
             );
         }
 
-        return $this->getRouter()->finalizePath($link);
+        return $link;
     }
 
     /**
